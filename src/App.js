@@ -1,51 +1,107 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import { Dropdown } from 'react-native-element-dropdown';
 import useLocalStorage from './hook/useStorage';
+import { getDayInMonth } from './util/DateTimeUtil';
+import { formatNumber } from './util/NumberFormatUtil';
 
 function App() {
 	const localStorage = useLocalStorage();
 
-	const [record, setRecord] = useState([]);
+	const [sum, setSum] = useState(0);
+	const [record, setRecord] = useState({});
 	const [value, setValue] = useState('');
 	const [tag, setTag] = useState('');
 	const [date, setDate] = useState({
-		dateString: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`,
-		timestamp: Date.now(),
+		dateString: '',
+		year: '',
+		month: '',
+		day: '',
+		timestamp: 0,
 	});
-	const dataKey = date.dateString;
+	const { dateString, year, month, day, timestamp } = date;
+	const [dropdownItem, setDropdownItem] = useState([
+		{label: 'Food', value: 'food'},
+		{label: 'Entertainment', value: 'entertainment'},
+	]);
+	const [group, setGroup] = useState(dropdownItem[0]);
 
 	useEffect(() => {
-		
+		const initData = async () => {
+			const current = new Date();
+			const _year = current.getFullYear();
+			const _month = String(current.getMonth() + 1).padStart(2, '0');
+			const _day = String(new Date().getDate()).padStart(2, '0');
+			setDate({dateString: `${_year}-${_month}-${_day}`, timestamp: new Date(`${_year}-${_month}-${_day}`), year: _year, month: _month, day: _day});
+			for (const d of getDayInMonth(_year, month)) {
+				const history = await localStorage.get(`${_year}-${_month}-${d}`);
+				setRecord(prev => {
+					prev[d] = Array.isArray(history) ? history : [];
+					return prev;
+				});
+			}
+        };
+        initData();
 	}, []);
 
-	const onDateChange = async (d) => {
-		setDate(d);
-		const history = await localStorage.get(dataKey);
-		const _history = Array.isArray(history) ? history : [];
-		setRecord(_history);
-	};
+	useEffect(() => {
+		record?.[day]?.forEach(item => {
+			setSum((prev) =>{
+				prev += Number(item.value);
+				return prev;
+			});
+		})
+	}, [dateString]);
 
 	const onConfirm = async () => {
 		if (value.length === 0 || !date) { return; }
 
-		const history = await localStorage.get(dataKey);
-		const _history = Array.isArray(history) ? history : [];
+		const _history = record?.[day] ?? [];
 		const data = {
 			id: _history.length > 0 ? _history[_history.length - 1].id + 1 : 1,
-			timestamp: date.timestamp,
+			timestamp: timestamp,
 			value: value,
+			group: group,
 			tag: tag.split(','),
 		};
 		const list = [..._history, data];
-		await localStorage.set(dataKey, list);
-		setRecord(list);
+		await localStorage.set(dateString, list);
+		setSum((prev) =>{
+			prev += Number(value);
+			return prev;
+		});
+		setRecord(prev => {
+			prev[day] = list;
+			return prev;
+		});
 	};
 
-	const onClear = async (id) => {
-		const history = await localStorage.get(dataKey);
-		await localStorage.set(dataKey, history.filter(x => x.id !== id));
-		setRecord(record.filter(x => x.id !== id));
+	const onClear = async (item) => {
+		const newRecord = record?.[day]?.filter(x => x.id !== item.id);
+		await localStorage.set(dateString, newRecord);
+		setSum((prev) =>{
+			prev -= Number(item.value);
+			return prev;
+		});
+		setRecord(prev => {
+			prev[day] = newRecord;
+			return prev;
+		});
+	};
+
+	const getMarkedDate = () => {
+		let marked = {
+			[dateString]: {selected: true, disableTouchEvent: true},
+		};
+		Object.keys(record ?? {}).forEach(key => {
+			const dayRecord = record[key];
+			if (dayRecord.length > 0) {
+				const _key = `${year}-${month}-${key}`;
+				marked[_key] = {...marked[_key], marked: true, dotColor: 'red'};
+			}
+		});
+		return marked;
 	};
 
 	return (<SafeAreaView >
@@ -53,16 +109,26 @@ function App() {
 		<ScrollView contentInsetAdjustmentBehavior="automatic">
 			<View>
 				<Calendar
-					onDayPress={onDateChange}
-					markedDates={{
-						[date.dateString]: {selected: true, disableTouchEvent: true, selectedDotColor: 'blue'},
-					}}
+					onDayPress={setDate}
+					markedDates={getMarkedDate()}
 				/>
 				<TextInput
 					onChangeText={setValue}
 					value={value}
 					inputMode="decimal"
 					placeholder="price"
+				/>
+				<Dropdown
+					value={group}
+					items={dropdownItem}
+					onChange={item => {
+						setGroup(item.value);
+					}}
+					data={dropdownItem}
+					maxHeight={300}
+					labelField="label"
+					valueField="value"
+					placeholder="Select item"
 				/>
 				<TextInput
 					autoCapitalize="none"
@@ -76,20 +142,20 @@ function App() {
 					onPress={onConfirm}
 				/>
 				<Text style={styles.message}>Message: {localStorage.message}</Text>
-				<Text style={styles.header}>Date: {date.dateString.toString()}</Text>
+				<Text style={styles.header}>Date: {dateString.toString()} Sum: {formatNumber(sum)}</Text>
 				<ScrollView style={styles.record} nestedScrollEnabled={true}>
 				{
-					record.map(item => {
+					record?.[day]?.map(item => {
 						return <View style={styles.listItem} key={item.id}>
 							<Text>
 								{item.id}:{'\n'}
-								Value: {item.value}{'\n'}
-								Tag: {item.tag.map(_tag => {
+								Value: {formatNumber(item.value)}{'\n'}
+								Tag: {item.tag?.map(_tag => {
 									return <Text key={_tag}>{_tag}, </Text>;
 								})}
 							</Text>
 							<Pressable style={styles.clearButton}
-								onPress={() => onClear(item.id)}
+								onPress={() => onClear(item)}
 							>
 								<Text  style={styles.clearText}>Clear</Text>
 							</Pressable>
