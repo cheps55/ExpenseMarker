@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
 
 const useLocalStorage = () => {
+
     const [message, setMessage] = useState('');
 
     const set = async (key: string, payload: any) => {

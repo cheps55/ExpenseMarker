@@ -2,12 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Button, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { Dropdown } from 'react-native-element-dropdown';
-import useLocalStorage from './hook/useStorage';
+import useAuth from './hook/useAuth';
+import useFirebase from './hook/useFirebase';
+import useLocalStorage from './hook/useLocalStorage';
 import { getDayInMonth } from './util/DateTimeUtil';
 import { formatNumber } from './util/NumberFormatUtil';
 
 function App() {
+	useAuth();
 	const localStorage = useLocalStorage();
+	const { setCloudData } = useFirebase();
 
 	const [sum, setSum] = useState(0);
 	const [record, setRecord] = useState({});
