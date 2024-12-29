@@ -119,9 +119,17 @@ function App() {
 					onPress={onSync}
 				/>
 				<Calendar
-					onDayPress={setDate}
+					onDayPress={item => {
+						setDate({
+							dateString: item.dateString,
+							year: String(item.year),
+							month: String(item.month).padStart(2, '0'),
+							day: String(item.day).padStart(2, '0'),
+							timestamp: item.timestamp,
+						});
+					}}
 					onMonthChange={item => {
-						setRecord([]);
+						setRecord({});
 						setSum({});
 						const _year = String(item.year);
 						const _month = String(item.month).padStart(2, '0');
