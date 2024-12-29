@@ -11,7 +11,7 @@ import { formatNumber } from './util/NumberFormatUtil';
 function App() {
 	useAuth();
 	const localStorage = useLocalStorage();
-	const { setCloudData } = useFirebase();
+	const cloudStorage = useFirebase();
 
 	const [sum, setSum] = useState(0);
 	const [record, setRecord] = useState({});
@@ -66,7 +66,7 @@ function App() {
 			id: _history.length > 0 ? _history[_history.length - 1].id + 1 : 1,
 			timestamp: timestamp,
 			value: value,
-			group: group,
+			group: group.value,
 			tag: tag.split(','),
 		};
 		const list = [..._history, data];
@@ -145,7 +145,6 @@ function App() {
 					title="Confirm"
 					onPress={onConfirm}
 				/>
-				<Text style={styles.message}>Message: {localStorage.message}</Text>
 				<Text style={styles.header}>Date: {dateString.toString()} Sum: {formatNumber(sum)}</Text>
 				<ScrollView style={styles.record} nestedScrollEnabled={true}>
 				{

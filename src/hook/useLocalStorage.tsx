@@ -1,14 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const useLocalStorage = () => {
-
     const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        if (message.length > 0) { console.log('Local Storage Error Message: ', message); }
+        return () => { setMessage(''); };
+    }, [message]);
 
     const set = async (key: string, payload: any) => {
         try {
 			await AsyncStorage.setItem(key, JSON.stringify(payload));
-			setMessage('Save Complete');
 		} catch (e: any) {
 			setMessage(e.message);
 		}
@@ -26,11 +29,10 @@ const useLocalStorage = () => {
     const clear = async () => {
         try {
 			await AsyncStorage.clear();
-            setMessage('Clear All Complete');
 		} catch (e: any) {
 			setMessage(e.message);
 		}
-    }
+    };
 
     return {
         set: set,

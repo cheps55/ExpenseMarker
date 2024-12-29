@@ -8,7 +8,7 @@ const useAuth = () => {
         auth()
         .signInWithEmailAndPassword(Authentication.email, Authentication.password)
         .then(() => {
-            console.log('User account created & signed in!');
+            console.log('User account signed in!');
         })
         .catch(error => {
             console.error(error);

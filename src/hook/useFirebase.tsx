@@ -1,28 +1,35 @@
 import firestore from '@react-native-firebase/firestore';
+import { useEffect, useState } from 'react';
 
-const useFirebase = () => {
-    const collection = 'Record';
-    
-    const getCloudData = async (list: string[]) => {
-        const result = await firestore().collection(collection).get();
-        return result;
+const useFirebase = (collection: string = 'Record') => {
+    const [message, setMessage] = useState('');
+
+     useEffect(() => {
+        if (message.length > 0) { console.log('Firebase Storage Error Message: ', message); }
+        return () => { setMessage(''); };
+    }, [message]);
+
+    const set = async (key: string, payload: any) => {
+        try {
+            firestore().collection(collection).doc(key).set({ list: payload });
+        } catch (e: any) {
+            setMessage(e.message);
+        }
     };
 
-    const setCloudData = async () => {
-        firestore()
-        .collection(collection)
-        .add({
-            name: 'Ada Lovelace',
-            age: 30,
-        })
-        .then(() => {
-            console.log('Record added!');
-        });
+    const get = async (key: string) => {
+        try {
+            const result = await firestore().collection(collection).where(firestore.FieldPath.documentId(), '==', key).get();
+            return result;
+        } catch (e: any) {
+            setMessage(e.message);
+        }
     };
 
     return {
-        getCloudData,
-        setCloudData,
+        set: set,
+        get: get,
+        message: message,
     };
 };
 
