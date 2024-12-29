@@ -43,7 +43,6 @@ function App() {
 			const _year = current.getFullYear();
 			const _month = String(current.getMonth() + 1).padStart(2, '0');
 			const _day = String(new Date().getDate()).padStart(2, '0');
-			setDate({dateString: `${_year}-${_month}-${_day}`, timestamp: new Date(`${_year}-${_month}-${_day}`), year: _year, month: _month, day: _day});
 			for (const d of getDayInMonth(_year, month)) {
 				const history = await localStorage.get(`${_year}-${_month}-${d}`);
 				setRecord(prev => {
@@ -51,6 +50,7 @@ function App() {
 					return prev;
 				});
 			}
+			setDate({dateString: `${_year}-${_month}-${_day}`, timestamp: new Date(`${_year}-${_month}-${_day}`), year: _year, month: _month, day: _day});
         };
         initData();
 	}, []);
@@ -169,6 +169,7 @@ function App() {
 				<Button
 					title={language.get('confirm')}
 					onPress={onConfirm}
+					disabled={value.length === 0 || !date}
 				/>
 				<Text style={styles.header}>{language.get('date')}: {dateString.toString()} {language.get('sum')}: {formatNumber(sum)}</Text>
 				<ScrollView style={styles.record} nestedScrollEnabled={true}>
@@ -176,9 +177,7 @@ function App() {
 					record?.[day]?.map(item => {
 						return <View style={styles.listItem} key={item.id}>
 							<Text>
-								{item.id}:{'\n'}
-								{language.get('shop.name')}: {item.name}{'\n'}
-								{language.get('price')}: {formatNumber(item.value)}{'\n'}
+								{language.get('shop.name')}: {item.name} {language.get('price')}: {formatNumber(item.value)}{'\n'}
 								{language.get('tag')}: {item.tag?.map(_tag => {
 									return <Text key={_tag}>{_tag}, </Text>;
 								})}
