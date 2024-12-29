@@ -177,10 +177,11 @@ function App() {
 					record?.[day]?.map(item => {
 						return <View style={styles.listItem} key={item.id}>
 							<Text>
-								{language.get('shop.name')}: {item.name} {language.get('price')}: {formatNumber(item.value)}{'\n'}
-								{language.get('tag')}: {item.tag?.map(_tag => {
+								{language.get('shop.name')}: {item.name}{'\n'}
+								{language.get('price')}: {formatNumber(item.value)}{'\n'}
+								{/* {language.get('tag')}: {item.tag?.map(_tag => {
 									return <Text key={_tag}>{_tag}, </Text>;
-								})}
+								})} */}
 							</Text>
 							<Pressable style={styles.clearButton}
 								onPress={() => onClear(item)}
