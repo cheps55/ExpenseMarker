@@ -4,6 +4,7 @@ import { Calendar } from 'react-native-calendars';
 import { Dropdown } from 'react-native-element-dropdown';
 import useAuth from './hook/useAuth';
 import useFirebase from './hook/useFirebase';
+import useLanguage from './hook/useLanguage';
 import useLocalStorage from './hook/useLocalStorage';
 import { getDayInMonth } from './util/DateTimeUtil';
 import { formatNumber } from './util/NumberFormatUtil';
@@ -12,11 +13,16 @@ function App() {
 	useAuth();
 	const localStorage = useLocalStorage();
 	const cloudStorage = useFirebase();
+	const language = useLanguage();
 
 	const [sum, setSum] = useState(0);
 	const [record, setRecord] = useState({});
-	const [value, setValue] = useState('');
-	const [tag, setTag] = useState('');
+	const [inputData, setInputData] = useState({
+		name: '',
+		value: '',
+		tag: [],
+	});
+	const { name, value, tag } = inputData;
 	const [date, setDate] = useState({
 		dateString: '',
 		year: '',
@@ -26,8 +32,8 @@ function App() {
 	});
 	const { dateString, year, month, day, timestamp } = date;
 	const [dropdownItem, setDropdownItem] = useState([
-		{label: 'Food', value: 'food'},
-		{label: 'Entertainment', value: 'entertainment'},
+		{label: language.get('dropdown.food'), value: 'food'},
+		{label: language.get('dropdown.entertainment'), value: 'entertainment'},
 	]);
 	const [group, setGroup] = useState(dropdownItem[0]);
 
@@ -72,9 +78,10 @@ function App() {
 		const data = {
 			id: _history.length > 0 ? _history[_history.length - 1].id + 1 : 1,
 			timestamp: timestamp,
-			value: value,
+			name: name,
+			value: Number(value),
 			group: group.value,
-			tag: tag.split(','),
+			tag: tag.length > 0 ? tag.split(',') : [],
 		};
 		const list = [..._history, data];
 		await localStorage.set(dateString, list);
@@ -85,6 +92,11 @@ function App() {
 		setRecord(prev => {
 			prev[day] = list;
 			return prev;
+		});
+		setInputData({
+			name: '',
+			value: '',
+			tag: [],
 		});
 	};
 
@@ -120,7 +132,7 @@ function App() {
 		<ScrollView contentInsetAdjustmentBehavior="automatic">
 			<View>
 				<Button
-					title="Sync"
+					title={language.get('sync')}
 					onPress={onSync}
 				/>
 				<Calendar
@@ -128,50 +140,53 @@ function App() {
 					markedDates={getMarkedDate()}
 				/>
 				<TextInput
-					onChangeText={setValue}
+					onChangeText={e => setInputData(prev => ({...prev, name: e}))}
+					value={name}
+					placeholder={language.get('shop.name')}
+				/>
+				<TextInput
+					onChangeText={e => setInputData(prev => ({...prev, value: e}))}
 					value={value}
 					inputMode="decimal"
-					placeholder="price"
+					placeholder={language.get('price')}
 				/>
 				<Dropdown
 					value={group}
 					items={dropdownItem}
-					onChange={item => {
-						setGroup(item.value);
-					}}
+					onChange={e => setGroup(e.value)}
 					data={dropdownItem}
 					maxHeight={300}
 					labelField="label"
 					valueField="value"
-					placeholder="Select item"
 				/>
 				<TextInput
 					autoCapitalize="none"
-					onChangeText={setTag}
+					onChangeText={e => setInputData(prev => ({...prev, tag: e}))}
 					value={tag}
 					multiline numberOfLines={5}
-					placeholder="tag: use ',' to split"
+					placeholder={language.get('tag.description')}
 				/>
 				<Button
-					title="Confirm"
+					title={language.get('confirm')}
 					onPress={onConfirm}
 				/>
-				<Text style={styles.header}>Date: {dateString.toString()} Sum: {formatNumber(sum)}</Text>
+				<Text style={styles.header}>{language.get('date')}: {dateString.toString()} {language.get('sum')}: {formatNumber(sum)}</Text>
 				<ScrollView style={styles.record} nestedScrollEnabled={true}>
 				{
 					record?.[day]?.map(item => {
 						return <View style={styles.listItem} key={item.id}>
 							<Text>
 								{item.id}:{'\n'}
-								Value: {formatNumber(item.value)}{'\n'}
-								Tag: {item.tag?.map(_tag => {
+								{language.get('shop.name')}: {item.name}{'\n'}
+								{language.get('price')}: {formatNumber(item.value)}{'\n'}
+								{language.get('tag')}: {item.tag?.map(_tag => {
 									return <Text key={_tag}>{_tag}, </Text>;
 								})}
 							</Text>
 							<Pressable style={styles.clearButton}
 								onPress={() => onClear(item)}
 							>
-								<Text  style={styles.clearText}>Clear</Text>
+								<Text  style={styles.clearText}>{language.get('clear')}</Text>
 							</Pressable>
 						</View>;
 					})
