@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
+import { SaveObject } from '../interface/SaveObject';
 
 const useLocalStorage = () => {
     const [message, setMessage] = useState('');
@@ -26,6 +27,20 @@ const useLocalStorage = () => {
 		}
     };
 
+    const getAll = async () => {
+        try {
+            const keys = await AsyncStorage.getAllKeys();
+            const result: any = await AsyncStorage.multiGet(keys);
+            let obj: {[key: string]: SaveObject} = {};
+            result.forEach((item: string[]) => {
+                obj[item[0]] = JSON.parse(item[1]);
+            });
+            return obj;
+        } catch (e: any) {
+            setMessage(e.message);
+        }
+    };
+
     const clear = async () => {
         try {
 			await AsyncStorage.clear();
@@ -37,6 +52,7 @@ const useLocalStorage = () => {
     return {
         set: set,
         get: get,
+        getAll: getAll,
         clear: clear,
         message: message,
     };

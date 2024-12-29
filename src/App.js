@@ -58,6 +58,13 @@ function App() {
 		})
 	}, [dateString]);
 
+	const onSync = async () => {
+		const result = await localStorage.getAll();
+		for (const key of Object.keys(result)) {
+			await cloudStorage.set(key, result[key]);
+		}
+	};
+
 	const onConfirm = async () => {
 		if (value.length === 0 || !date) { return; }
 
@@ -112,6 +119,10 @@ function App() {
 		<StatusBar />
 		<ScrollView contentInsetAdjustmentBehavior="automatic">
 			<View>
+				<Button
+					title="Sync"
+					onPress={onSync}
+				/>
 				<Calendar
 					onDayPress={setDate}
 					markedDates={getMarkedDate()}
