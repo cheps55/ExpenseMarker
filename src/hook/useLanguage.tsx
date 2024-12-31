@@ -12,9 +12,13 @@ const useLanguage = (language: 'en' | 'zh' = 'zh') => {
 };
 
 const Lang: {[key: string]: {[key: string]: string}} = Object.freeze({
-    'sync': {
-        'en': 'Sync',
-        'zh': '同步',
+    'sync.from': {
+        'en': 'Sync from cloud',
+        'zh': '同步自',
+    },
+    'sync.to': {
+        'en': 'Sync to cloud',
+        'zh': '同步至',
     },
     'confirm': {
         'en': 'Confirm',
@@ -56,13 +60,13 @@ const Lang: {[key: string]: {[key: string]: string}} = Object.freeze({
         'en': 'Clear',
         'zh': '清除',
     },
-    'confirm.sync': {
-        'en': 'Confirm Sync',
-        'zh': '確定同步',
-    },
     'close': {
         'en': 'Close',
         'zh': '關閉',
+    },
+    'pop_up.edit': {
+        'en': 'Edit',
+        'zh': '編輯',
     },
 });
 

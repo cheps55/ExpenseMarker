@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Button, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { Dropdown } from 'react-native-element-dropdown';
+import InputForm from './components/Form/InputForm';
 import ConfirmPopUp from './components/PopUp/ConfirmPopUp';
+import EditPopUp from './components/PopUp/EditPopUp';
+import GlobalStyles from './css/GlobalCss';
 import useAuth from './hook/useAuth';
 import useFirebase from './hook/useFirebase';
 import useLanguage from './hook/useLanguage';
@@ -16,19 +18,15 @@ function App() {
 	const cloudStorage = useFirebase();
 	const language = useLanguage();
 
-	const dropdownItem = Object.freeze([
-		{label: language.get('dropdown.food'), value: 'food'},
-		{label: language.get('dropdown.entertainment'), value: 'entertainment'},
-	]);
-
 	const [sum, setSum] = useState({});
 	const [record, setRecord] = useState({});
-	const [inputData, setInputData] = useState({
+	const initialInputData = {
 		name: '',
 		value: '',
-		group: dropdownItem[0],
-		tag: [],
-	});
+		group: '',
+		tag: '',
+	};
+	const [inputData, setInputData] = useState(initialInputData);
 	const { name, value, group, tag } = inputData;
 	const [date, setDate] = useState({
 		dateString: '',
@@ -39,7 +37,11 @@ function App() {
 	});
 	const { dateString, year, month, day, timestamp } = date;
 	const key = `${year}-${month}-${day}`;
+
+	const [syncType, setSyncType] = useState('');
 	const [isConfirmPopUpOpen, setIsConfirmPopUpOpen] = useState(false);
+	const [selectedEdit, setSelectedEdit] = useState({});
+	const [isEditPopUpOpen, setIsEditPopUpOpen] = useState(false);
 
 	useEffect(() => {
 		const current = new Date();
@@ -50,18 +52,18 @@ function App() {
 	}, []);
 
 	const initRecordList = async (_year, _month, _day) => {
-		for (const d of getDayInMonth(_year, month)) {
-			const _key = `${_year}-${_month}-${d}`;
-			const history = await localStorage.get(_key);
+		let keys = [];
+		for (const d of getDayInMonth(_year, month)) { keys.push(`${_year}-${_month}-${d}`); }
+		const result = await localStorage.getRange(keys);
+		for (const _key of Object.keys(result)) {
+			const _data = Array.isArray(result[_key]) ? result[_key] : [];
 			setRecord(prev => {
-				prev[_key] = Array.isArray(history) ? history : [];
+				prev[_key] = _data;
 				return {...prev};
 			});
 			setSum(prev => {
 				prev[_key] = 0;
-				(Array.isArray(history) ? history : []).forEach(item => {
-					prev[_key] += item.value;
-				});
+				_data.forEach(item => { prev[_key] += item.value; });
 				return {...prev};
 			});
 		}
@@ -69,58 +71,99 @@ function App() {
 	};
 
 	const onSync = async () => {
-		const local = await localStorage.getAll();
-		for (const _key of Object.keys(local)) {
-			await cloudStorage.set(_key, local[_key]);
+		if (syncType === 'from') {
+			const cloud = await cloudStorage.getRange();
+			for (const _key of Object.keys(cloud)) { await localStorage.set(_key, cloud[_key]); }
 		}
+
+		if (syncType === 'to') {
+			const local = await localStorage.getRange();
+			for (const _key of Object.keys(local)) { await cloudStorage.set(_key, local[_key]); }
+		}
+		setIsConfirmPopUpOpen(false);
+	};
+
+	const isDisableConfirmButton = () => {
+		return (
+			name.length === 0 || value.length === 0 || !date ||
+			typeof Number(value) !== 'number' || isNaN(Number(value)) || Number(value) < 0
+		);
 	};
 
 	const onConfirm = async () => {
-		if (value.length === 0 || !date) { return; }
-
 		const _history = record?.[key] ?? [];
 		const data = {
 			id: _history.length > 0 ? _history[_history.length - 1].id + 1 : 1,
 			timestamp: timestamp,
 			name: name,
 			value: Number(value),
-			group: group.value,
+			group: group,
 			tag: tag.length > 0 ? tag.split(',') : [],
 		};
 		const list = [..._history, data];
-		await localStorage.set(dateString, list);
+		await localStorage.set(key, list);
 		setRecord(prev => {
-			prev[dateString] = list;
+			prev[key] = list;
 			return {...prev};
 		});
 		setSum((prev) =>{
-			prev[dateString] += Number(value);
+			prev[key] += Number(value);
 			return {...prev};
 		});
-		setInputData({ name: '', value: '', tag: [] });
+		setInputData(initialInputData);
 	};
 
-	const onClear = async (item) => {
-		const newRecord = record?.[key]?.filter(x => x.id !== item.id);
+	const onEdit = async (editData) => {
+		let oldData = record?.[key].find(x => x.id === editData.id);
+		const oldValue = oldData.value;
+		oldData.name = editData.name;
+		oldData.value = Number(editData.value);
+		oldData.group = editData.group;
+		oldData.tag = editData.tag.length > 0 ? editData.tag.split(',') : [];
+
+		await localStorage.set(key, record?.[key]);
+		setRecord(prev => {
+			prev[key] = record?.[key];
+			return {...prev};
+		});
+		setSum((prev) =>{
+			prev[key] -= oldValue;
+			prev[key] += Number(editData.value);
+			return {...prev};
+		});
+		setIsEditPopUpOpen(false);
+		setSelectedEdit({});
+	};
+
+	const onClear = async (data) => {
+		const newRecord = record?.[key]?.filter(x => x.id !== data.id);
 		await localStorage.set(dateString, newRecord);
 		setRecord(prev => {
 			prev[dateString] = newRecord;
 			return {...prev};
 		});
 		setSum((prev) =>{
-			prev[dateString] -= Number(item.value);
+			prev[dateString] -= Number(data.value);
 			return {...prev};
 		});
+		setIsEditPopUpOpen(false);
+		setSelectedEdit({});
 	};
 
 	return (<SafeAreaView >
 		<StatusBar />
 		<ScrollView contentInsetAdjustmentBehavior="automatic">
 			<View>
-				<Button
-					title={language.get('sync')}
-					onPress={() => setIsConfirmPopUpOpen(true)}
-				/>
+				<View>
+					<Button
+						title={language.get('sync.from')}
+						onPress={() => { setSyncType('from'); setIsConfirmPopUpOpen(true); }}
+					/>
+					<Button
+						title={language.get('sync.to')}
+						onPress={() => { setSyncType('to'); setIsConfirmPopUpOpen(true); }}
+					/>
+				</View>
 				<Calendar
 					onDayPress={item => {
 						setDate({
@@ -155,37 +198,11 @@ function App() {
 					}}
 					hideExtraDays
 				/>
-				<TextInput
-					onChangeText={e => setInputData(prev => ({...prev, name: e}))}
-					value={name}
-					placeholder={language.get('shop.name')}
-				/>
-				<TextInput
-					onChangeText={e => setInputData(prev => ({...prev, value: e}))}
-					value={value}
-					inputMode="decimal"
-					placeholder={language.get('price')}
-				/>
-				<Dropdown style={styles.dropdown}
-					value={group}
-					items={dropdownItem}
-					onChange={e => setInputData(prev => ({...prev, group: e.value}))}
-					data={dropdownItem}
-					maxHeight={300}
-					labelField="label"
-					valueField="value"
-				/>
-				<TextInput
-					autoCapitalize="none"
-					onChangeText={e => setInputData(prev => ({...prev, tag: e}))}
-					value={tag}
-					multiline numberOfLines={5}
-					placeholder={language.get('tag.description')}
-				/>
+				<InputForm state={inputData} setState={setInputData} />
 				<Button
 					title={language.get('confirm')}
 					onPress={onConfirm}
-					disabled={value.length === 0 || !date}
+					disabled={isDisableConfirmButton()}
 				/>
 				<Text style={styles.header}>
 					{language.get('date')}: {dateString.toString()}&nbsp;
@@ -194,27 +211,27 @@ function App() {
 				<ScrollView style={styles.record} nestedScrollEnabled={true}>
 				{
 					record?.[key]?.map(item => {
-						return <View style={styles.listItem} key={item.id}>
-							<Text>
-								{language.get('shop.name')}: {item.name}{'\n'}
-								{language.get('price')}: {formatNumber(item.value)}{'\n'}
-								{/* {language.get('tag')}: {item.tag?.map(_tag => {
-									return <Text key={_tag}>{_tag}, </Text>;
-								})} */}
-							</Text>
-							<Pressable style={styles.clearButton}
-								onPress={() => onClear(item)}
-							>
-								<Text style={styles.clearYext}>{language.get('clear')}</Text>
+						return <View style={[styles.listItem, styles[`group_${item.group}`]]} key={item.id}>
+							<Pressable onPress={() => { setSelectedEdit(item); setIsEditPopUpOpen(true);}}>
+								<Text>
+									{language.get('shop.name')}: {item.name}{'\n'}
+									{language.get('price')}: {formatNumber(item.value)}{'\n'}
+								</Text>
 							</Pressable>
 						</View>;
 					})
 				}
-  				</ScrollView>
-			</View>
-			{isConfirmPopUpOpen && <ConfirmPopUp
-				onConfirm={onSync} onClose={() => setIsConfirmPopUpOpen(false)}
-			/>}
+			</ScrollView>
+		</View>
+		{isConfirmPopUpOpen && <ConfirmPopUp
+			title={language.get('confirm') + language.get(`sync.${syncType}`)}
+			onConfirm={onSync} onClose={() => {setSyncType(''); setIsConfirmPopUpOpen(false);}}
+		/>}
+		{isEditPopUpOpen && <EditPopUp
+			data={selectedEdit}
+			onConfirm={onEdit} onClose={() => {setSelectedEdit({}); setIsEditPopUpOpen(false);}} 
+			onClear={onClear}
+		/>}
 		</ScrollView>
 	</SafeAreaView>);
 }
@@ -223,14 +240,14 @@ const styles = StyleSheet.create({
 	dayContainer: { width: '100%' },
 	day: {textAlign: 'center'},
 	selectedDay: {color: 'purple', backgroundColor: 'lightblue'},
-	dropdown: {paddingLeft: '4'},
 	header: {textAlign: 'center'},
 	message: {color:'red'},
-	record: {height: '300', overflow: 'hidden'},
-	listItem: {position: 'relative'},
-	clearButton: {position: 'absolute', top: '0', right: '0'},
+	record: {height: 300, overflow: 'hidden'},
+	listItem: { padding: 4 },
 	redText: {color: 'red', textAlign: 'center'},
 	clearYext: {color: 'red'},
+	group_food: GlobalStyles.dropdown.group_food,
+	group_entertainment: GlobalStyles.dropdown.group_entertainment,
 });
 
 export default App;

@@ -1,5 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import { useEffect, useState } from 'react';
+import { ISavedData } from '../interface/InputInterface';
 
 const useFirebase = (collection: string = 'Record') => {
     const [message, setMessage] = useState('');
@@ -26,12 +27,21 @@ const useFirebase = (collection: string = 'Record') => {
         }
     };
 
-    const getAll = async () => {
+    const getRange = async (keys: string[] = []) => {
         try {
             let json: {[key: string]: any} = {};
-            const result = await firestore().collection(collection).get();
+            let result;
+            if (keys.length > 0) {
+                result = await firestore().collection(collection).where(firestore.FieldPath.documentId(), 'in', keys).get();
+            } else {
+                result = await firestore().collection(collection).get();
+            }
             result?.docs.forEach(doc => {
-                json[doc.id] = doc.data().list;
+                let data = doc.data()?.list ?? [];
+                data.map((item: any | ISavedData) => {
+                    item.tag = item.tag.join(',');
+                });
+                json[doc.id] = data;
             });
             return json;
         } catch (e: any) {
@@ -41,7 +51,7 @@ const useFirebase = (collection: string = 'Record') => {
 
     const logAllJson = async () => {
         let json: {[key: string]: any} = {};
-        const result = await getAll();
+        const result = await getRange();
 
         result?.docs.forEach((doc: any) => {
             json[doc.id] = doc.data();
@@ -52,7 +62,7 @@ const useFirebase = (collection: string = 'Record') => {
     return {
         set: set,
         get: get,
-        getAll: getAll,
+        getRange: getRange,
         logAllJson,
         message: message,
     };

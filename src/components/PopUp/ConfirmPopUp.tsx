@@ -1,9 +1,14 @@
 import React from "react";
 import { Button, Modal, StyleSheet, Text, View } from "react-native";
+import GlobalStyles from "../../css/GlobalCss";
 import useLanguage from '../../hook/useLanguage';
 
 const ConfirmPopUp = ({
-    onConfirm, onClose,
+    title, onConfirm, onClose,
+}: {
+    title: string,
+    onConfirm: () => void,
+    onClose: () => void,
 }) => {
     const language = useLanguage();
 
@@ -15,7 +20,7 @@ const ConfirmPopUp = ({
         >
             <View style={styles.centeredView}>
                 <View style={styles.modalView}>
-                    <Text>{language.get('confirm.sync')}</Text>
+                    <Text style={styles.title}>{title}</Text>
                     <View style={styles.buttonContainer}>
                         <Button title={language.get('close')} color="red" onPress={onClose} />
                         <Button title={language.get('confirm')} onPress={onConfirm} />
@@ -27,27 +32,9 @@ const ConfirmPopUp = ({
 };
 
 const styles = StyleSheet.create({
-    centeredView: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalView: {
-        backgroundColor: 'white',
-        borderRadius: 20,
-        padding: 20,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-    },
+    centeredView: GlobalStyles.popUp.centeredView,
+    modalView: GlobalStyles.popUp.modalView,
+    title: GlobalStyles.popUp.title,
+    buttonContainer: GlobalStyles.popUp.buttonContainer,
 });
 export default ConfirmPopUp;

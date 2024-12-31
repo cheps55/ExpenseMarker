@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { KeyValuePair } from '@react-native-async-storage/async-storage/lib/typescript/types';
 import { useEffect, useState } from 'react';
-import { SaveObject } from '../interface/SaveObject';
+import { IInputData, ISavedData } from '../interface/InputInterface';
 
 const useLocalStorage = () => {
     const [message, setMessage] = useState('');
@@ -27,13 +28,17 @@ const useLocalStorage = () => {
 		}
     };
 
-    const getAll = async () => {
+    const getRange = async (keys: string[] = []) => {
         try {
-            const keys = await AsyncStorage.getAllKeys();
-            const result: any = await AsyncStorage.multiGet(keys);
-            let obj: {[key: string]: SaveObject} = {};
-            result.forEach((item: string[]) => {
-                obj[item[0]] = JSON.parse(item[1]);
+            const _keys = keys.length > 0 ? keys : await AsyncStorage.getAllKeys();
+            const result: readonly KeyValuePair[] = await AsyncStorage.multiGet(_keys);
+            let obj: {[key: string]: IInputData} = {};
+            result.forEach((value: KeyValuePair) => {
+                let data = value[1] ? JSON.parse(value[1]) : [];
+                data.map((item: any | ISavedData) => {
+                    item.tag = item.tag.join(',');
+                });
+                obj[value[0]] = data;
             });
             return obj;
         } catch (e: any) {
@@ -52,7 +57,7 @@ const useLocalStorage = () => {
     return {
         set: set,
         get: get,
-        getAll: getAll,
+        getRange: getRange,
         clear: clear,
         message: message,
     };
