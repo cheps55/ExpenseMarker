@@ -53,7 +53,7 @@ function App() {
 
 	const initRecordList = async (_year, _month, _day) => {
 		let keys = [];
-		for (const d of getDayInMonth(_year, month)) { keys.push(`${_year}-${_month}-${d}`); }
+		for (const d of getDayInMonth(Number(_year), Number(_month))) { keys.push(`${_year}-${_month}-${d}`); }
 		const result = await localStorage.getRange(keys);
 		for (const _key of Object.keys(result)) {
 			const _data = Array.isArray(result[_key]) ? result[_key] : [];

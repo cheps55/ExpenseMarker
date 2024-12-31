@@ -39,7 +39,7 @@ const useFirebase = (collection: string = 'Record') => {
             result?.docs.forEach(doc => {
                 let data = doc.data()?.list ?? [];
                 data.map((item: any | ISavedData) => {
-                    item.tag = item.tag.join(',');
+                    item.tag = Array.isArray(item.tag) ? item.tag.join(',') : item.tag;
                 });
                 json[doc.id] = data;
             });

@@ -36,7 +36,7 @@ const useLocalStorage = () => {
             result.forEach((value: KeyValuePair) => {
                 let data = value[1] ? JSON.parse(value[1]) : [];
                 data.map((item: any | ISavedData) => {
-                    item.tag = item.tag.join(',');
+                    item.tag = Array.isArray(item.tag) ? item.tag.join(',') : item.tag;
                 });
                 obj[value[0]] = data;
             });
