@@ -9,6 +9,7 @@ import useAuth from './hook/useAuth';
 import useFirebase from './hook/useFirebase';
 import useLanguage from './hook/useLanguage';
 import useLocalStorage from './hook/useLocalStorage';
+import { IInputData, IInputDate, ISavedData } from './interface/InputInterface';
 import { getDayInMonth } from './util/DateTimeUtil';
 import { formatNumber } from './util/NumberFormatUtil';
 
@@ -18,17 +19,19 @@ function App() {
 	const cloudStorage = useFirebase();
 	const language = useLanguage();
 
-	const [sum, setSum] = useState({});
-	const [record, setRecord] = useState({});
-	const initialInputData = {
+	const [sum, setSum] = useState<{[key: string]: number}>({});
+	const [record, setRecord] = useState<{[key: string]: ISavedData[]}>({});
+	const initialInputData: IInputData = {
+		id: 0,
+		timestamp: 0,
 		name: '',
 		value: '',
 		group: '',
 		tag: '',
 	};
-	const [inputData, setInputData] = useState(initialInputData);
+	const [inputData, setInputData] = useState<IInputData>(initialInputData);
 	const { name, value, group, tag } = inputData;
-	const [date, setDate] = useState({
+	const [date, setDate] = useState<IInputDate>({
 		dateString: '',
 		year: '',
 		month: '',
@@ -40,45 +43,56 @@ function App() {
 
 	const [syncType, setSyncType] = useState('');
 	const [isConfirmPopUpOpen, setIsConfirmPopUpOpen] = useState(false);
-	const [selectedEdit, setSelectedEdit] = useState({});
+	const [selectedEdit, setSelectedEdit] = useState<IInputData | {}>({});
 	const [isEditPopUpOpen, setIsEditPopUpOpen] = useState(false);
 
 	useEffect(() => {
 		const current = new Date();
-		const _year = current.getFullYear();
+		const _year = String(current.getFullYear());
 		const _month = String(current.getMonth() + 1).padStart(2, '0');
 		const _day = String(new Date().getDate()).padStart(2, '0');
         initRecordList(_year, _month, _day);
 	}, []);
 
-	const initRecordList = async (_year, _month, _day) => {
+	const initRecordList = async (_year: string, _month: string, _day: string) => {
 		let keys = [];
 		for (const d of getDayInMonth(Number(_year), Number(_month))) { keys.push(`${_year}-${_month}-${d}`); }
 		const result = await localStorage.getRange(keys);
-		for (const _key of Object.keys(result)) {
-			const _data = Array.isArray(result[_key]) ? result[_key] : [];
-			setRecord(prev => {
-				prev[_key] = _data;
-				return {...prev};
-			});
-			setSum(prev => {
-				prev[_key] = 0;
-				_data.forEach(item => { prev[_key] += item.value; });
-				return {...prev};
-			});
+		if (result) {
+			for (const _key of Object.keys(result)) {
+				const _data = Array.isArray(result[_key]) ? result[_key] : [];
+				setRecord(prev => {
+					_data.forEach((item: any) => { item.tag = item.tag.join(','); });
+					prev[_key] = _data;
+					return {...prev};
+				});
+				setSum(prev => {
+					prev[_key] = 0;
+					_data.forEach(item => { prev[_key] += item.value; });
+					return {...prev};
+				});
+			}
+			setDate({dateString: `${_year}-${_month}-${_day}`, timestamp: new Date(`${_year}-${_month}-${_day}`).valueOf(), year: _year, month: _month, day: _day});
 		}
-		setDate({dateString: `${_year}-${_month}-${_day}`, timestamp: new Date(`${_year}-${_month}-${_day}`).valueOf(), year: _year, month: _month, day: _day});
 	};
 
 	const onSync = async () => {
 		if (syncType === 'from') {
 			const cloud = await cloudStorage.getRange();
-			for (const _key of Object.keys(cloud)) { await localStorage.set(_key, cloud[_key]); }
+			if (cloud) {
+				for (const _key of Object.keys(cloud)) {
+					await localStorage.set(_key, cloud[_key]);
+				}
+			}
 		}
 
 		if (syncType === 'to') {
 			const local = await localStorage.getRange();
-			for (const _key of Object.keys(local)) { await cloudStorage.set(_key, local[_key]); }
+			if (local) {
+				for (const _key of Object.keys(local)) {
+					await cloudStorage.set(_key, local[_key]);
+				}
+			}
 		}
 		setIsConfirmPopUpOpen(false);
 	};
@@ -113,8 +127,8 @@ function App() {
 		setInputData(initialInputData);
 	};
 
-	const onEdit = async (editData) => {
-		let oldData = record?.[key].find(x => x.id === editData.id);
+	const onEdit = async (editData: IInputData) => {
+		let oldData = record?.[key].find(x => x.id === editData.id)!;
 		const oldValue = oldData.value;
 		oldData.name = editData.name;
 		oldData.value = Number(editData.value);
@@ -135,7 +149,7 @@ function App() {
 		setSelectedEdit({});
 	};
 
-	const onClear = async (data) => {
+	const onClear = async (data: IInputData) => {
 		const newRecord = record?.[key]?.filter(x => x.id !== data.id);
 		await localStorage.set(dateString, newRecord);
 		setRecord(prev => {
@@ -165,7 +179,7 @@ function App() {
 					/>
 				</View>
 				<Calendar
-					onDayPress={item => {
+					onDayPress={(item: IInputDate) => {
 						setDate({
 							dateString: item.dateString,
 							year: String(item.year),
@@ -174,7 +188,7 @@ function App() {
 							timestamp: item.timestamp,
 						});
 					}}
-					onMonthChange={item => {
+					onMonthChange={(item: IInputDate) => {
 						setRecord({});
 						setSum({});
 						const _year = String(item.year);
@@ -183,7 +197,7 @@ function App() {
 						initRecordList(_year, _month, _day);
 					}}
 					// eslint-disable-next-line react/no-unstable-nested-components
-					dayComponent={props => {
+					dayComponent={(props: any) => {
 						const { date: _date, onPress, children } = props;
 						const _key = `${_date.year}-${String(_date.month).padStart(2, '0')}-${String(_date.day).padStart(2, '0')}`;
 						return (

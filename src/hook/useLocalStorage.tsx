@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { KeyValuePair } from '@react-native-async-storage/async-storage/lib/typescript/types';
 import { useEffect, useState } from 'react';
-import { IInputData, ISavedData } from '../interface/InputInterface';
+import { ISavedData } from '../interface/InputInterface';
 
 const useLocalStorage = () => {
     const [message, setMessage] = useState('');
@@ -32,13 +32,9 @@ const useLocalStorage = () => {
         try {
             const _keys = keys.length > 0 ? keys : await AsyncStorage.getAllKeys();
             const result: readonly KeyValuePair[] = await AsyncStorage.multiGet(_keys);
-            let obj: {[key: string]: IInputData} = {};
+            let obj: {[key: string]: ISavedData[]} = {};
             result.forEach((value: KeyValuePair) => {
-                let data = value[1] ? JSON.parse(value[1]) : [];
-                data.map((item: any | ISavedData) => {
-                    item.tag = Array.isArray(item.tag) ? item.tag.join(',') : item.tag;
-                });
-                obj[value[0]] = data;
+                obj[value[0]] = value[1] ? JSON.parse(value[1]) : [];
             });
             return obj;
         } catch (e: any) {

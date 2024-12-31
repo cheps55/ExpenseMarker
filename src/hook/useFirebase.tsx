@@ -29,7 +29,7 @@ const useFirebase = (collection: string = 'Record') => {
 
     const getRange = async (keys: string[] = []) => {
         try {
-            let json: {[key: string]: any} = {};
+            let json: {[key: string]: ISavedData[]} = {};
             let result;
             if (keys.length > 0) {
                 result = await firestore().collection(collection).where(firestore.FieldPath.documentId(), 'in', keys).get();
@@ -38,9 +38,6 @@ const useFirebase = (collection: string = 'Record') => {
             }
             result?.docs.forEach(doc => {
                 let data = doc.data()?.list ?? [];
-                data.map((item: any | ISavedData) => {
-                    item.tag = Array.isArray(item.tag) ? item.tag.join(',') : item.tag;
-                });
                 json[doc.id] = data;
             });
             return json;
