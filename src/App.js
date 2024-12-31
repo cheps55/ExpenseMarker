@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { Dropdown } from 'react-native-element-dropdown';
+import ConfirmPopUp from './components/PopUp/ConfirmPopUp';
 import useAuth from './hook/useAuth';
 import useFirebase from './hook/useFirebase';
 import useLanguage from './hook/useLanguage';
@@ -15,14 +16,20 @@ function App() {
 	const cloudStorage = useFirebase();
 	const language = useLanguage();
 
+	const dropdownItem = Object.freeze([
+		{label: language.get('dropdown.food'), value: 'food'},
+		{label: language.get('dropdown.entertainment'), value: 'entertainment'},
+	]);
+
 	const [sum, setSum] = useState({});
 	const [record, setRecord] = useState({});
 	const [inputData, setInputData] = useState({
 		name: '',
 		value: '',
+		group: dropdownItem[0],
 		tag: [],
 	});
-	const { name, value, tag } = inputData;
+	const { name, value, group, tag } = inputData;
 	const [date, setDate] = useState({
 		dateString: '',
 		year: '',
@@ -32,11 +39,7 @@ function App() {
 	});
 	const { dateString, year, month, day, timestamp } = date;
 	const key = `${year}-${month}-${day}`;
-	const [dropdownItem, setDropdownItem] = useState([
-		{label: language.get('dropdown.food'), value: 'food'},
-		{label: language.get('dropdown.entertainment'), value: 'entertainment'},
-	]);
-	const [group, setGroup] = useState(dropdownItem[0]);
+	const [isConfirmPopUpOpen, setIsConfirmPopUpOpen] = useState(false);
 
 	useEffect(() => {
 		const current = new Date();
@@ -62,13 +65,13 @@ function App() {
 				return {...prev};
 			});
 		}
-		setDate({dateString: `${_year}-${_month}-${_day}`, timestamp: new Date(`${_year}-${_month}-${_day}`), year: _year, month: _month, day: _day});
+		setDate({dateString: `${_year}-${_month}-${_day}`, timestamp: new Date(`${_year}-${_month}-${_day}`).valueOf(), year: _year, month: _month, day: _day});
 	};
 
 	const onSync = async () => {
-		const result = await localStorage.getAll();
-		for (const _key of Object.keys(result)) {
-			await cloudStorage.set(_key, result[_key]);
+		const local = await localStorage.getAll();
+		for (const _key of Object.keys(local)) {
+			await cloudStorage.set(_key, local[_key]);
 		}
 	};
 
@@ -116,7 +119,7 @@ function App() {
 			<View>
 				<Button
 					title={language.get('sync')}
-					onPress={onSync}
+					onPress={() => setIsConfirmPopUpOpen(true)}
 				/>
 				<Calendar
 					onDayPress={item => {
@@ -166,7 +169,7 @@ function App() {
 				<Dropdown style={styles.dropdown}
 					value={group}
 					items={dropdownItem}
-					onChange={e => setGroup(e.value)}
+					onChange={e => setInputData(prev => ({...prev, group: e.value}))}
 					data={dropdownItem}
 					maxHeight={300}
 					labelField="label"
@@ -209,6 +212,9 @@ function App() {
 				}
   				</ScrollView>
 			</View>
+			{isConfirmPopUpOpen && <ConfirmPopUp
+				onConfirm={onSync} onClose={() => setIsConfirmPopUpOpen(false)}
+			/>}
 		</ScrollView>
 	</SafeAreaView>);
 }

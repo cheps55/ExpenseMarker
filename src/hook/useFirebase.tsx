@@ -26,9 +26,34 @@ const useFirebase = (collection: string = 'Record') => {
         }
     };
 
+    const getAll = async () => {
+        try {
+            let json: {[key: string]: any} = {};
+            const result = await firestore().collection(collection).get();
+            result?.docs.forEach(doc => {
+                json[doc.id] = doc.data().list;
+            });
+            return json;
+        } catch (e: any) {
+            setMessage(e.message);
+        }
+    };
+
+    const logAllJson = async () => {
+        let json: {[key: string]: any} = {};
+        const result = await getAll();
+
+        result?.docs.forEach((doc: any) => {
+            json[doc.id] = doc.data();
+        });
+        console.log(JSON.stringify(json));
+	};
+
     return {
         set: set,
         get: get,
+        getAll: getAll,
+        logAllJson,
         message: message,
     };
 };

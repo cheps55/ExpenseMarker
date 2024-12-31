@@ -56,6 +56,14 @@ const Lang: {[key: string]: {[key: string]: string}} = Object.freeze({
         'en': 'Clear',
         'zh': '清除',
     },
+    'confirm.sync': {
+        'en': 'Confirm Sync',
+        'zh': '確定同步',
+    },
+    'close': {
+        'en': 'Close',
+        'zh': '關閉',
+    },
 });
 
 export default useLanguage;
