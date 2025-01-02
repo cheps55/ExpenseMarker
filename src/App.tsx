@@ -1,3 +1,4 @@
+import { useNetInfoInstance } from '@react-native-community/netinfo';
 import React, { useEffect, useState } from 'react';
 import { Button, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
@@ -18,6 +19,8 @@ function App() {
 	const localStorage = useLocalStorage();
 	const cloudStorage = useFirebase();
 	const language = useLanguage();
+
+	const { netInfo: { type, isConnected } } = useNetInfoInstance();
 
 	const [sum, setSum] = useState<{[key: string]: number}>({});
 	const [record, setRecord] = useState<{[key: string]: ISavedData[]}>({});
@@ -170,12 +173,15 @@ function App() {
 			<View>
 				<View>
 					<Button
-						title={language.get('sync.from')}
+						title={`${language.get('sync.from')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
 						onPress={() => { setSyncType('from'); setIsConfirmPopUpOpen(true); }}
+						disabled={!isConnected}
 					/>
 					<Button
-						title={language.get('sync.to')}
+						title={`${language.get('sync.to')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
+						color="green"
 						onPress={() => { setSyncType('to'); setIsConfirmPopUpOpen(true); }}
+						disabled={!isConnected}
 					/>
 				</View>
 				<Calendar

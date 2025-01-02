@@ -12,13 +12,17 @@ const useLanguage = (language: 'en' | 'zh' = 'zh') => {
 };
 
 const Lang: {[key: string]: {[key: string]: string}} = Object.freeze({
+    'no_internet': {
+        'en': '(No Internet)',
+        'zh': '(無網路)',
+    },
     'sync.from': {
-        'en': 'Sync from cloud',
-        'zh': '同步自',
+        'en': 'Sync from cloud ↓',
+        'zh': '同步自雲端 ↓',
     },
     'sync.to': {
-        'en': 'Sync to cloud',
-        'zh': '同步至',
+        'en': 'Sync to cloud ↑',
+        'zh': '同步至雲端 ↑',
     },
     'confirm': {
         'en': 'Confirm',
