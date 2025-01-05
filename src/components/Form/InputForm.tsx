@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import GlobalStyles from '../../css/GlobalCss';
+import { GroupType } from '../../enum/InputEnum';
 import useLanguage from '../../hook/useLanguage';
 import { IInputData } from '../../interface/InputInterface';
-import { GroupType } from './../../enum/InputType';
 
 const InputForm = ({
     state, setState,

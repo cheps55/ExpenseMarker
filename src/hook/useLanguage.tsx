@@ -11,7 +11,11 @@ const useLanguage = (language: 'en' | 'zh' = 'zh') => {
     };
 };
 
-const Lang: {[key: string]: {[key: string]: string}} = Object.freeze({
+interface ILanguage {
+    [key: string]: {[key: string]: string}
+}
+
+const Lang: ILanguage = Object.freeze({
     'no_internet': {
         'en': '(No Internet)',
         'zh': '(無網路)',
@@ -24,9 +28,13 @@ const Lang: {[key: string]: {[key: string]: string}} = Object.freeze({
         'en': 'Sync to cloud ↑',
         'zh': '同步至雲端 ↑',
     },
-    'confirm': {
-        'en': 'Confirm',
-        'zh': '確認',
+    'date': {
+        'en': 'Date',
+        'zh': '日期',
+    },
+    'sum': {
+        'en': 'Sum',
+        'zh': '總額',
     },
     'shop.name': {
         'en': 'Shop Name',
@@ -52,13 +60,9 @@ const Lang: {[key: string]: {[key: string]: string}} = Object.freeze({
         'en': 'Tag (Use "," to split tag)',
         'zh': '標籤 (使用 “,” 分割標籤)',
     },
-    'date': {
-        'en': 'Date',
-        'zh': '日期',
-    },
-    'sum': {
-        'en': 'Sum',
-        'zh': '總額',
+    'confirm': {
+        'en': 'Confirm',
+        'zh': '確認',
     },
     'clear': {
         'en': 'Clear',
@@ -71,6 +75,14 @@ const Lang: {[key: string]: {[key: string]: string}} = Object.freeze({
     'pop_up.edit': {
         'en': 'Edit',
         'zh': '編輯',
+    },
+    'page.main': {
+        'en': 'Main',
+        'zh': '首頁',
+    },
+    'page.chart': {
+        'en': 'Chart',
+        'zh': '圖表',
     },
 });
 

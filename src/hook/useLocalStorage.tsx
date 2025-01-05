@@ -13,7 +13,9 @@ const useLocalStorage = () => {
 
     const set = async (key: string, payload: any) => {
         try {
-			await AsyncStorage.setItem(key, JSON.stringify(payload));
+            if (payload.length > 0) {
+                await AsyncStorage.setItem(key, JSON.stringify(payload));
+            }
 		} catch (e: any) {
 			setMessage(e.message);
 		}

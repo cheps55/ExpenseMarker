@@ -1,4 +1,4 @@
-import { GroupType } from '../enum/InputType';
+import { GroupType } from '../enum/InputEnum';
 
 export interface IInputData {
     id: number,

@@ -12,7 +12,9 @@ const useFirebase = (collection: string = 'Record') => {
 
     const set = async (key: string, payload: any) => {
         try {
-            firestore().collection(collection).doc(key).set({ list: payload });
+            if (payload.length > 0) {
+                firestore().collection(collection).doc(key).set({ list: payload });
+            }
         } catch (e: any) {
             setMessage(e.message);
         }
