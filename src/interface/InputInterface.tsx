@@ -14,6 +14,10 @@ export interface ISavedData extends Omit<IInputData, 'value' | 'tag'> {
     tag: string[],
 }
 
+export interface ISavedList {
+    list: ISavedData[],
+}
+
 export interface IInputDate {
     dateString: string,
     year: string,

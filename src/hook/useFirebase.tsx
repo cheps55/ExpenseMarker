@@ -1,6 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import { useEffect, useState } from 'react';
-import { ISavedData } from '../interface/InputInterface';
+import { ISavedList } from '../interface/InputInterface';
 
 const useFirebase = (collection: string = 'Record') => {
     const [message, setMessage] = useState('');
@@ -10,10 +10,10 @@ const useFirebase = (collection: string = 'Record') => {
         return () => { setMessage(''); };
     }, [message]);
 
-    const set = async (key: string, payload: any) => {
+    const set = async (key: string, payload: ISavedList) => {
         try {
-            if (payload.length > 0) {
-                firestore().collection(collection).doc(key).set({ list: payload });
+            if (payload.list.length > 0) {
+                firestore().collection(collection).doc(key).set(payload);
             }
         } catch (e: any) {
             setMessage(e.message);
@@ -21,17 +21,20 @@ const useFirebase = (collection: string = 'Record') => {
     };
 
     const get = async (key: string) => {
+        let json: ISavedList = { list: [] };
         try {
-            const result = await firestore().collection(collection).where(firestore.FieldPath.documentId(), '==', key).get();
-            return result;
+           const result = await firestore().collection(collection).where(firestore.FieldPath.documentId(), '==', key).get();
+            if (result?.docs.length > 0) { json = result?.docs?.[0].data() as ISavedList; }
+            return json;
         } catch (e: any) {
             setMessage(e.message);
+            return json;
         }
     };
 
     const getRange = async (keys: string[] = []) => {
+        let json: {[key: string]: ISavedList} = {};
         try {
-            let json: {[key: string]: ISavedData[]} = {};
             let result;
             if (keys.length > 0) {
                 result = await firestore().collection(collection).where(firestore.FieldPath.documentId(), 'in', keys).get();
@@ -39,23 +42,19 @@ const useFirebase = (collection: string = 'Record') => {
                 result = await firestore().collection(collection).get();
             }
             result?.docs.forEach(doc => {
-                let data = doc.data()?.list ?? [];
-                json[doc.id] = data;
+                const { list } = doc.data();
+                json[doc.id] = { list };
             });
             return json;
         } catch (e: any) {
             setMessage(e.message);
+            return json;
         }
     };
 
     const logAllJson = async () => {
-        let json: {[key: string]: any} = {};
         const result = await getRange();
-
-        result?.docs.forEach((doc: any) => {
-            json[doc.id] = doc.data();
-        });
-        console.log(JSON.stringify(json));
+        console.log(JSON.stringify(result));
 	};
 
     return {

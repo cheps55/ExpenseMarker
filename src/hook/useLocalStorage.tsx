@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { KeyValuePair } from '@react-native-async-storage/async-storage/lib/typescript/types';
 import { useEffect, useState } from 'react';
-import { ISavedData } from '../interface/InputInterface';
+import { ISavedList } from '../interface/InputInterface';
 
 const useLocalStorage = () => {
     const [message, setMessage] = useState('');
@@ -11,9 +11,9 @@ const useLocalStorage = () => {
         return () => { setMessage(''); };
     }, [message]);
 
-    const set = async (key: string, payload: any) => {
+    const set = async (key: string, payload: ISavedList) => {
         try {
-            if (payload.length > 0) {
+            if (payload.list.length > 0) {
                 await AsyncStorage.setItem(key, JSON.stringify(payload));
             }
 		} catch (e: any) {
@@ -22,25 +22,29 @@ const useLocalStorage = () => {
     };
 
     const get = async (key: string) => {
+        let json: ISavedList = { list: [] };
         try {
 			const result = await AsyncStorage.getItem(key);
-            return result ? JSON.parse(result) : {};
+            if (result) { json = JSON.parse(result); }
+            return json;
 		} catch (e: any) {
 			setMessage(e.message);
+            return json;
 		}
     };
 
     const getRange = async (keys: string[] = []) => {
+        let json: {[key: string]: ISavedList} = {};
         try {
             const _keys = keys.length > 0 ? keys : await AsyncStorage.getAllKeys();
             const result: readonly KeyValuePair[] = await AsyncStorage.multiGet(_keys);
-            let obj: {[key: string]: ISavedData[]} = {};
             result.forEach((value: KeyValuePair) => {
-                obj[value[0]] = value[1] ? JSON.parse(value[1]) : [];
+                json[value[0]] = value[1] ? JSON.parse(value[1]) : [];
             });
-            return obj;
+            return json;
         } catch (e: any) {
             setMessage(e.message);
+            return json;
         }
     };
 

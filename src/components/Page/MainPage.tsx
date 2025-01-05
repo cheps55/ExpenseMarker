@@ -6,7 +6,7 @@ import GlobalStyles from '../../css/GlobalCss';
 import useFirebase from '../../hook/useFirebase';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
-import { IInputData, IInputDate, ISavedData } from '../../interface/InputInterface';
+import { IInputData, IInputDate, ISavedData, ISavedList } from '../../interface/InputInterface';
 import { getDayInMonth } from '../../util/DateTimeUtil';
 import { formatNumber } from '../../util/NumberFormatUtil';
 import InputForm from '../Form/InputForm';
@@ -61,7 +61,7 @@ function MainPage() {
 		const result = await localStorage.getRange(keys);
 		if (result) {
 			for (const _key of Object.keys(result)) {
-				const _data = Array.isArray(result[_key]) ? result[_key] : [];
+				const _data = Array.isArray(result[_key].list) ? result[_key].list : [];
 				setRecord(prev => {
 					_data.forEach((item: any) => { item.tag = item.tag.join(','); });
 					prev[_key] = _data;
@@ -106,19 +106,20 @@ function MainPage() {
 	};
 
 	const onConfirm = async () => {
-		const _history = await localStorage.get(key);
+		const history = await localStorage.get(key);
+		const { list } = history;
 		const data = {
-			id: _history.length > 0 ? _history[_history.length - 1].id + 1 : 1,
+			id: list.length > 0 ? list[list.length - 1].id + 1 : 1,
 			timestamp: timestamp,
 			name: name,
 			value: Number(value),
 			group: group,
 			tag: tag.length > 0 ? tag.split(',') : [],
 		};
-		const list = [..._history, data];
-		await localStorage.set(key, list);
+		const _list: ISavedList = { list: [...list, data] };
+		await localStorage.set(key, _list);
 		setRecord(prev => {
-			prev[key] = list;
+			prev[key] = _list.list;
 			return {...prev};
 		});
 		setSum((prev) =>{
@@ -136,7 +137,7 @@ function MainPage() {
 		oldData.group = editData.group;
 		oldData.tag = editData.tag.length > 0 ? editData.tag.split(',') : [];
 
-		await localStorage.set(key, record?.[key]);
+		await localStorage.set(key, {list: record?.[key]});
 		setRecord(prev => {
 			prev[key] = record?.[key];
 			return {...prev};
@@ -152,7 +153,7 @@ function MainPage() {
 
 	const onClear = async (data: IInputData) => {
 		const newRecord = record?.[key]?.filter(x => x.id !== data.id);
-		await localStorage.set(dateString, newRecord);
+		await localStorage.set(dateString, { list: newRecord });
 		setRecord(prev => {
 			prev[dateString] = newRecord;
 			return {...prev};
