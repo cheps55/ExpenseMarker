@@ -16,6 +16,8 @@ export interface ISavedData extends Omit<IInputData, 'value' | 'tag'> {
 
 export interface ISavedList {
     list: ISavedData[],
+    daySum: number,
+    daySumDetail: { [key: string]: number },
 }
 
 export interface IInputDate {
@@ -24,4 +26,13 @@ export interface IInputDate {
     month: string,
     day: string,
     timestamp: number,
+}
+
+export interface IStorage {
+    set: (key: string, payload: ISavedList) => Promise<void>;
+    get: (key: string) => Promise<ISavedList>;
+    getRange: (keys?: string[]) => Promise<{ [key: string]: ISavedList }>;
+    message: string;
+    clear?: () => Promise<void>;
+    logAllRecord?: () => Promise<void>;
 }

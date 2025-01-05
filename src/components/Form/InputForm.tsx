@@ -4,7 +4,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import GlobalStyles from '../../css/GlobalCss';
 import { GroupType } from '../../enum/InputEnum';
 import useLanguage from '../../hook/useLanguage';
-import { IInputData } from '../../interface/InputInterface';
+import { IInputData } from '../../interface/DataInterface';
 
 const InputForm = ({
     state, setState,
@@ -22,8 +22,9 @@ const InputForm = ({
 
     useEffect(() => {
         if (group?.length === 0) {
-            setState((prev: IInputData) => ({...prev, group: dropdownItem[0].value}));
+            setState((prev) => ({...prev, group: dropdownItem[0].value}));
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state]);
 
     return <>
@@ -71,6 +72,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     textItem: { flex: 1, fontSize: 16 },
+    group_: {},
     group_food: GlobalStyles.dropdown.group_food,
 	group_entertainment: GlobalStyles.dropdown.group_entertainment,
 });

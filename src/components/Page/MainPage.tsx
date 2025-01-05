@@ -6,9 +6,9 @@ import GlobalStyles from '../../css/GlobalCss';
 import useFirebase from '../../hook/useFirebase';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
-import { IInputData, IInputDate, ISavedData, ISavedList } from '../../interface/InputInterface';
+import { IInputData, IInputDate, ISavedList } from '../../interface/DataInterface';
 import { getDayInMonth } from '../../util/DateTimeUtil';
-import { formatNumber } from '../../util/NumberFormatUtil';
+import { addNumber, formatNumber, subtractNumber } from '../../util/NumberUtil';
 import InputForm from '../Form/InputForm';
 import ConfirmPopUp from '../PopUp/ConfirmPopUp';
 import EditPopUp from '../PopUp/EditPopUp';
@@ -21,25 +21,11 @@ function MainPage() {
 	const { netInfo: { isConnected } } = useNetInfoInstance();
 
 	const [sum, setSum] = useState<{[key: string]: number}>({});
-	const [record, setRecord] = useState<{[key: string]: ISavedData[]}>({});
-	const initialInputData: IInputData = {
-		id: 0,
-		timestamp: 0,
-		name: '',
-		value: '',
-		group: '',
-		tag: '',
-	};
+	const [record, setRecord] = useState<{[key: string]: ISavedList}>({});
+	const initialInputData: IInputData = { id: 0, timestamp: 0, name: '', value: '', group: '', tag: '' };
 	const [inputData, setInputData] = useState<IInputData>(initialInputData);
-	const { name, value, group, tag } = inputData;
-	const [date, setDate] = useState<IInputDate>({
-		dateString: '',
-		year: '',
-		month: '',
-		day: '',
-		timestamp: 0,
-	});
-	const { dateString, year, month, day, timestamp } = date;
+	const [date, setDate] = useState<IInputDate>({ dateString: '', year: '', month: '', day: '', timestamp: 0 });
+	const { dateString, year, month, day } = date;
 	const key = `${year}-${month}-${day}`;
 
 	const [syncType, setSyncType] = useState('');
@@ -52,7 +38,8 @@ function MainPage() {
 		const _year = String(current.getFullYear());
 		const _month = String(current.getMonth() + 1).padStart(2, '0');
 		const _day = String(new Date().getDate()).padStart(2, '0');
-        initRecordList(_year, _month, _day);
+		initRecordList(_year, _month, _day);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const initRecordList = async (_year: string, _month: string, _day: string) => {
@@ -61,15 +48,8 @@ function MainPage() {
 		const result = await localStorage.getRange(keys);
 		if (result) {
 			for (const _key of Object.keys(result)) {
-				const _data = Array.isArray(result[_key].list) ? result[_key].list : [];
 				setRecord(prev => {
-					_data.forEach((item: any) => { item.tag = item.tag.join(','); });
-					prev[_key] = _data;
-					return {...prev};
-				});
-				setSum(prev => {
-					prev[_key] = 0;
-					_data.forEach(item => { prev[_key] += item.value; });
+					prev[_key] = result[_key];
 					return {...prev};
 				});
 			}
@@ -99,31 +79,33 @@ function MainPage() {
 	};
 
 	const isDisableConfirmButton = () => {
+		const { name, value } = inputData;
+		const _value = Number(value);
 		return (
 			name.length === 0 || value.length === 0 || !date ||
-			typeof Number(value) !== 'number' || isNaN(Number(value)) || Number(value) < 0
+			typeof _value !== 'number' || isNaN(_value) || _value < 0
 		);
 	};
 
-	const onConfirm = async () => {
+	const onConfirm = async (addData: IInputData) => {
 		const history = await localStorage.get(key);
-		const { list } = history;
-		const data = {
-			id: list.length > 0 ? list[list.length - 1].id + 1 : 1,
-			timestamp: timestamp,
-			name: name,
-			value: Number(value),
-			group: group,
-			tag: tag.length > 0 ? tag.split(',') : [],
+		const { list, daySum, daySumDetail } = history;
+		const _value = Number(addData.value);
+		const _list: ISavedList = {
+			list: [...list, {
+				id: list.length > 0 ? list[list.length - 1].id + 1 : 1,
+				timestamp: addData.timestamp,
+				name: addData.name,
+				value: _value,
+				group: addData.group,
+				tag: addData.tag.length > 0 ? addData.tag.split(',') : [],
+			}],
+			daySum: addNumber([daySum,_value]),
+			daySumDetail: { ...daySumDetail, [addData.group]: addNumber([daySumDetail[addData.group], _value]) },
 		};
-		const _list: ISavedList = { list: [...list, data] };
 		await localStorage.set(key, _list);
 		setRecord(prev => {
-			prev[key] = _list.list;
-			return {...prev};
-		});
-		setSum((prev) =>{
-			prev[key] += Number(value);
+			prev[key] = _list;
 			return {...prev};
 		});
 		setInputData(initialInputData);
@@ -132,36 +114,39 @@ function MainPage() {
 	const onEdit = async (editData: IInputData) => {
 		const history = await localStorage.get(key);
 		let oldData = history.list.find(x => x.id === editData.id)!;
+
 		const oldValue = oldData.value;
+		const _value = Number(editData.value);
 		oldData.name = editData.name;
-		oldData.value = Number(editData.value);
+		oldData.value = _value;
 		oldData.group = editData.group;
 		oldData.tag = editData.tag.length > 0 ? editData.tag.split(',') : [];
 
+		history.daySum = subtractNumber([history.daySum, oldValue]);
+		history.daySum = addNumber([history.daySum, _value]);
+		history.daySumDetail[editData.group] = subtractNumber([history.daySumDetail[editData.group], oldValue]);
+		history.daySumDetail[editData.group] = addNumber([history.daySumDetail[editData.group], _value]);
 		await localStorage.set(key, history);
 		setRecord(prev => {
-			prev[key] = history.list;
-			return {...prev};
-		});
-		setSum((prev) =>{
-			prev[key] -= oldValue;
-			prev[key] += Number(editData.value);
+			prev[key] = history;
 			return {...prev};
 		});
 		setIsEditPopUpOpen(false);
 		setSelectedEdit({});
 	};
 
-	const onClear = async (data: IInputData) => {
+	const onClear = async (editData: IInputData) => {
 		const history = await localStorage.get(key);
-		const newRecord = history.list?.filter(x => x.id !== data.id);
-		await localStorage.set(dateString, { list: newRecord });
+		const { list, daySum, daySumDetail } = history;
+		const _value = Number(editData.value);
+		const data = {
+			list: list.filter(x => x.id !== editData.id),
+			daySum: subtractNumber([daySum, _value]),
+			daySumDetail: { ...daySumDetail, [editData.group]: subtractNumber([daySumDetail[editData.group], _value]) },
+		};
+		await localStorage.set(dateString, data);
 		setRecord(prev => {
-			prev[dateString] = newRecord;
-			return {...prev};
-		});
-		setSum((prev) =>{
-			prev[dateString] -= Number(data.value);
+			prev[dateString] = data;
 			return {...prev};
 		});
 		setIsEditPopUpOpen(false);
@@ -211,7 +196,7 @@ function MainPage() {
                             onPress={() => { requestAnimationFrame(() => onPress(_date)); }}
                         >
                             <Text style={styles.day}>{children}</Text>
-                            <Text style={styles.redText}>{formatNumber(sum[_key])}</Text>
+                            <Text style={styles.redText}>{formatNumber(record?.[_key]?.daySum)}</Text>
                         </TouchableOpacity>
                     );
                 }}
@@ -220,18 +205,23 @@ function MainPage() {
             <InputForm state={inputData} setState={setInputData} />
             <Button
                 title={language.get('confirm')}
-                onPress={onConfirm}
+                onPress={() => onConfirm(inputData)}
                 disabled={isDisableConfirmButton()}
             />
             <Text style={styles.header}>
                 {language.get('date')}: {dateString.toString()}&nbsp;
-                {language.get('sum')}: {formatNumber(sum[key])}
+                {language.get('sum')}: {formatNumber(record?.[key]?.daySum)}
             </Text>
             <ScrollView style={styles.record} nestedScrollEnabled={true}>
             {
-                record?.[key]?.map(item => {
+                record?.[key]?.list?.map(item => {
                     return <View style={[styles.listItem, styles[`group_${item.group}`]]} key={item.id}>
-                        <Pressable onPress={() => { setSelectedEdit(item); setIsEditPopUpOpen(true);}}>
+                        <Pressable
+							onPress={() => {
+								setSelectedEdit({...item, value: String(item.value), tag: item.tag.join(',')});
+								setIsEditPopUpOpen(true);}
+							}
+						>
                             <Text>
                                 {language.get('shop.name')}: {item.name}{'\n'}
                                 {language.get('price')}: {formatNumber(item.value)}{'\n'}
@@ -248,7 +238,7 @@ function MainPage() {
         />}
         {isEditPopUpOpen && <EditPopUp
             data={selectedEdit as IInputData}
-            onConfirm={onEdit} onClose={() => {setSelectedEdit({}); setIsEditPopUpOpen(false);}} 
+            onConfirm={onEdit} onClose={() => {setSelectedEdit({}); setIsEditPopUpOpen(false);}}
             onClear={onClear}
         />}
     </ScrollView>;

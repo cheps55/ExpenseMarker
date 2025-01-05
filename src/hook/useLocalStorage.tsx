@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { KeyValuePair } from '@react-native-async-storage/async-storage/lib/typescript/types';
 import { useEffect, useState } from 'react';
-import { ISavedList } from '../interface/InputInterface';
+import { ISavedList, IStorage } from '../interface/DataInterface';
 
-const useLocalStorage = () => {
+const useLocalStorage = (): IStorage => {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
@@ -22,7 +22,7 @@ const useLocalStorage = () => {
     };
 
     const get = async (key: string) => {
-        let json: ISavedList = { list: [] };
+        let json: ISavedList = { list: [], daySum: 0, daySumDetail: {} };
         try {
 			const result = await AsyncStorage.getItem(key);
             if (result) { json = JSON.parse(result); }

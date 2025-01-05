@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, Modal, StyleSheet, Text, View } from 'react-native';
 import GlobalStyles from '../../css/GlobalCss';
 import useLanguage from '../../hook/useLanguage';
-import { IInputData } from '../../interface/InputInterface';
+import { IInputData } from '../../interface/DataInterface';
 import InputForm from '../Form/InputForm';
 
 const EditPopUp = ({
