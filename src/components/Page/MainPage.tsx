@@ -20,7 +20,6 @@ function MainPage() {
 
 	const { netInfo: { isConnected } } = useNetInfoInstance();
 
-	const [sum, setSum] = useState<{[key: string]: number}>({});
 	const [record, setRecord] = useState<{[key: string]: ISavedList}>({});
 	const initialInputData: IInputData = { id: 0, timestamp: 0, name: '', value: '', group: '', tag: '' };
 	const [inputData, setInputData] = useState<IInputData>(initialInputData);
@@ -180,7 +179,6 @@ function MainPage() {
                 }}
                 onMonthChange={(item: IInputDate) => {
                     setRecord({});
-                    setSum({});
                     const _year = String(item.year);
                     const _month = String(item.month).padStart(2, '0');
                     const _day = String(item.day).padStart(2, '0');
