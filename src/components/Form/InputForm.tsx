@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import GlobalStyles from '../../css/GlobalCss';
@@ -15,10 +15,10 @@ const InputForm = ({
     const { name, value, group, tag } = state;
     const language = useLanguage();
 
-    const dropdownItem: {label: string, value: keyof typeof GroupType}[] = ([
-        {value: GroupType.food, get label() { return language.get(`dropdown.${this.value}`); }},
-        {value: GroupType.entertainment, get label() { return language.get(`dropdown.${this.value}`); }},
-    ]);
+    const dropdownItem: {label: string, value: keyof typeof GroupType}[] = useMemo(() => {
+        return Object.keys(GroupType).map(key => ({value: key as keyof typeof GroupType, label: language.get(`dropdown.${key}`)}));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         if (group?.length === 0) {
