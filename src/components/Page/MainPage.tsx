@@ -1,5 +1,5 @@
 import { useNetInfoInstance } from '@react-native-community/netinfo';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import GlobalStyles from '../../css/GlobalCss';
@@ -27,10 +27,17 @@ function MainPage() {
 	const { dateString, year, month, day } = date;
 	const key = `${year}-${month}-${day}`;
 
+	const [hasUpdate, setHasUpdate] = useState(false);
 	const [syncType, setSyncType] = useState('');
 	const [isConfirmPopUpOpen, setIsConfirmPopUpOpen] = useState(false);
 	const [selectedEdit, setSelectedEdit] = useState<IInputData | {}>({});
 	const [isEditPopUpOpen, setIsEditPopUpOpen] = useState(false);
+
+	const monthSum = useMemo(() => {
+		let sum = 0;
+		sum = addNumber([sum, ...Object.keys(record).map(_key => record[_key].daySum)]);
+		return sum;
+	}, [month, hasUpdate]);
 
 	useEffect(() => {
 		const current = new Date();
@@ -108,6 +115,7 @@ function MainPage() {
 			return {...prev};
 		});
 		setInputData(initialInputData);
+		setHasUpdate(prev => !prev);
 	};
 
 	const onEdit = async (editData: IInputData) => {
@@ -132,6 +140,7 @@ function MainPage() {
 		});
 		setIsEditPopUpOpen(false);
 		setSelectedEdit({});
+		setHasUpdate(prev => !prev);
 	};
 
 	const onClear = async (editData: IInputData) => {
@@ -150,6 +159,7 @@ function MainPage() {
 		});
 		setIsEditPopUpOpen(false);
 		setSelectedEdit({});
+		setHasUpdate(prev => !prev);
 	};
 
 	return <ScrollView contentInsetAdjustmentBehavior="automatic">
@@ -184,19 +194,23 @@ function MainPage() {
                     const _day = String(item.day).padStart(2, '0');
                     initRecordList(_year, _month, _day);
                 }}
+				renderHeader={(header: string) => {
+					return <View>
+						<Text>{new Date(header).toLocaleDateString('en-GB', {year: 'numeric', month: 'long'})}</Text>
+						<Text style={styles.redText}>{monthSum}</Text>
+					</View>;
+				}}
                 // eslint-disable-next-line react/no-unstable-nested-components
                 dayComponent={(props: any) => {
                     const { date: _date, onPress, children } = props;
                     const _key = `${_date.year}-${String(_date.month).padStart(2, '0')}-${String(_date.day).padStart(2, '0')}`;
-                    return (
-                        <TouchableOpacity
-                            style={[styles.dayContainer, dateString === _date.dateString ? styles.selectedDay : '']}
-                            onPress={() => { requestAnimationFrame(() => onPress(_date)); }}
-                        >
-                            <Text style={styles.day}>{children}</Text>
-                            <Text style={styles.redText}>{formatNumber(record?.[_key]?.daySum)}</Text>
-                        </TouchableOpacity>
-                    );
+                    return <TouchableOpacity
+						style={[styles.dayContainer, dateString === _date.dateString ? styles.selectedDay : '']}
+						onPress={() => { requestAnimationFrame(() => onPress(_date)); }}
+					>
+						<Text style={styles.day}>{children}</Text>
+						<Text style={styles.redText}>{formatNumber(record?.[_key]?.daySum)}</Text>
+					</TouchableOpacity>;
                 }}
                 hideExtraDays
             />
