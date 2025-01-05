@@ -130,16 +130,17 @@ function MainPage() {
 	};
 
 	const onEdit = async (editData: IInputData) => {
-		let oldData = record?.[key].find(x => x.id === editData.id)!;
+		const history = await localStorage.get(key);
+		let oldData = history.list.find(x => x.id === editData.id)!;
 		const oldValue = oldData.value;
 		oldData.name = editData.name;
 		oldData.value = Number(editData.value);
 		oldData.group = editData.group;
 		oldData.tag = editData.tag.length > 0 ? editData.tag.split(',') : [];
 
-		await localStorage.set(key, {list: record?.[key]});
+		await localStorage.set(key, history);
 		setRecord(prev => {
-			prev[key] = record?.[key];
+			prev[key] = history.list;
 			return {...prev};
 		});
 		setSum((prev) =>{
@@ -152,7 +153,8 @@ function MainPage() {
 	};
 
 	const onClear = async (data: IInputData) => {
-		const newRecord = record?.[key]?.filter(x => x.id !== data.id);
+		const history = await localStorage.get(key);
+		const newRecord = history.list?.filter(x => x.id !== data.id);
 		await localStorage.set(dateString, { list: newRecord });
 		setRecord(prev => {
 			prev[dateString] = newRecord;
