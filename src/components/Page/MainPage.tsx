@@ -217,7 +217,7 @@ function MainPage() {
             <InputForm state={inputData} setState={setInputData} />
             <Button
                 title={language.get('confirm')}
-                onPress={() => onConfirm(inputData)}
+                onPress={() => onConfirm({...inputData, ...date})}
                 disabled={isDisableConfirmButton()}
             />
             <Text style={styles.header}>
