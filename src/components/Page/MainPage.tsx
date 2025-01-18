@@ -213,6 +213,7 @@ function MainPage() {
 					</TouchableOpacity>;
                 }}
                 hideExtraDays
+				enableSwipeMonths
             />
             <InputForm state={inputData} setState={setInputData} />
             <Button

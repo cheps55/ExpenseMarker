@@ -26,7 +26,7 @@ const EditPopUp = ({
             <View style={styles.centeredView}>
                 <View style={styles.modalView}>
                     <Text style={styles.title}>{language.get('pop_up.edit')}</Text>
-                    <View>
+                    <View style={styles.form}>
                         <InputForm state={state} setState={setState} />
                     </View>
                     <View style={styles.buttonContainer}>
@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
     centeredView: GlobalStyles.popUp.centeredView,
     modalView: GlobalStyles.popUp.modalView,
     title: GlobalStyles.popUp.title,
+    form: { width: 150 },
     buttonContainer: GlobalStyles.popUp.buttonContainer,
 });
 export default EditPopUp;
