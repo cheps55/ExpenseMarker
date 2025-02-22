@@ -83,7 +83,7 @@ const SettingPage = () => {
             const byDay = Object.keys(all).filter(key => !isDeletedList(key) && isSumByDayData(key));
             const deleted = Object.keys(all).filter(key => isDeletedList(key));
             if (all) {
-                if (deleted) {
+                if (deleted.length > 0) {
                     for (const key of (all[LocalStorageKey.deleteRecord] as ISumByDayData).list) {
                         let collection: string = CloudCollection.History;
                         if (isSumByNameData(key)) { collection = CloudCollection.SumByName; }
@@ -118,6 +118,17 @@ const SettingPage = () => {
 	return <ScrollView contentInsetAdjustmentBehavior="automatic">
         <View style={styles.container}>
             <Button
+                title={`${'Delete all local'}`}
+                color="red"
+                onPress={() => { onDeleteAllLocal(); }}
+            />
+            <Button
+                title={`${'Old to new data'}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
+                color="purple"
+                onPress={() => { setSyncType(SyncType.oldToNew); setIsConfirmPopUpOpen(true); }}
+                disabled={!isConnected}
+            />
+            <Button
                 title={`${language.get('sync.from')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
                 onPress={() => { setSyncType(SyncType.from); setIsConfirmPopUpOpen(true); }}
                 disabled={!isConnected}
@@ -128,17 +139,6 @@ const SettingPage = () => {
                 onPress={() => { setSyncType(SyncType.to); setIsConfirmPopUpOpen(true); }}
                 disabled={!isConnected}
             />
-            <Button
-                title={`${'Old to new data'}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
-                color="purple"
-                onPress={() => { setSyncType(SyncType.oldToNew); setIsConfirmPopUpOpen(true); }}
-                disabled={!isConnected}
-            />
-            <Button
-                title={`${'Delete all local'}`}
-                color="red"
-                onPress={() => { onDeleteAllLocal(); }}
-            />
         </View>
         {isConfirmPopUpOpen && <ConfirmPopUp
             title={language.get('confirm') + language.get(`sync.${syncType}`)}
@@ -148,7 +148,7 @@ const SettingPage = () => {
 }
 
 const styles = StyleSheet.create({
-	container: { width: '100%', display: 'flex', gap: 4 },
+	container: { width: '100%', display: 'flex', gap: 8 },
 });
 
 export default SettingPage;
