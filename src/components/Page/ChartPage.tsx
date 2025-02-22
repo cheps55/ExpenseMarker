@@ -6,7 +6,7 @@ import useFirebase from '../../hook/useFirebase';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
 
-function ChartPage() {
+const ChartPage = () => {
 	const localStorage = useLocalStorage();
 	const cloudStorage = useFirebase();
 	const language = useLanguage();

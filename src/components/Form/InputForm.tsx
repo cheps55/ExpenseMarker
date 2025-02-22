@@ -4,13 +4,13 @@ import { Dropdown } from 'react-native-element-dropdown';
 import GlobalStyles from '../../css/GlobalCss';
 import { GroupType } from '../../enum/InputEnum';
 import useLanguage from '../../hook/useLanguage';
-import { IInputData } from '../../interface/DataInterface';
+import { IEditData, IInputData } from '../../interface/DataInterface';
 
 const InputForm = ({
     state, setState,
 }: {
-    state: IInputData,
-    setState: React.Dispatch<React.SetStateAction<IInputData>>
+    state: IInputData | IEditData,
+    setState: React.Dispatch<React.SetStateAction<IInputData>> | React.Dispatch<React.SetStateAction<IEditData>>
 }) => {
     const { name, value, group, tag } = state;
     const language = useLanguage();
@@ -22,26 +22,26 @@ const InputForm = ({
 
     useEffect(() => {
         if (group?.length === 0) {
-            setState((prev) => ({...prev, group: dropdownItem[0].value}));
+            setState((prev: any) => ({...prev, group: dropdownItem[0].value}));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state]);
 
     return <>
         <TextInput
-            onChangeText={e => setState((prev: IInputData) => ({...prev, name: e}))}
+            onChangeText={e => setState((prev: any) => ({...prev, name: e}))}
             value={name}
             placeholder={language.get('shop.name')}
         />
         <TextInput
-            onChangeText={e => setState((prev: IInputData) => ({...prev, value: e}))}
+            onChangeText={e => setState((prev: any) => ({...prev, value: e}))}
             value={String(value)}
             inputMode="decimal"
             placeholder={language.get('price')}
         />
         <Dropdown style={styles.dropdown}
             value={group}
-            onChange={e => setState((prev: IInputData) => ({...prev, group: e.value}))}
+            onChange={e => setState((prev: any) => ({...prev, group: e.value}))}
             data={dropdownItem}
             selectedTextStyle={styles[`group_${group}`]}
             renderItem={(item) => {
@@ -55,7 +55,7 @@ const InputForm = ({
         />
         <TextInput
             autoCapitalize="none"
-            onChangeText={e => setState((prev: IInputData) => ({...prev, tag: e}))}
+            onChangeText={e => setState((prev: any) => ({...prev, tag: e}))}
             value={tag}
             multiline numberOfLines={5}
             placeholder={language.get('tag.description')}

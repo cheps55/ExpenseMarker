@@ -84,6 +84,10 @@ const Lang: ILanguage = Object.freeze({
         'en': 'Chart',
         'zh': '圖表',
     },
+    'page.setting': {
+        'en': 'Setting',
+        'zh': '設定',
+    },
 });
 
 export default useLanguage;

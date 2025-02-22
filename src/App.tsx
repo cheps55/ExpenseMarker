@@ -3,6 +3,7 @@ import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 import BottomBar from './components/BottomBar/BottomBar';
 import ChartPage from './components/Page/ChartPage';
 import MainPage from './components/Page/MainPage';
+import SettingPage from './components/Page/SettingPage';
 import { PageEnum } from './enum/PageEnum';
 import useAuth from './hook/useAuth';
 
@@ -15,6 +16,7 @@ function App() {
 		<StatusBar />
 		{(() => {
 			switch(page) {
+				case PageEnum.setting: return <SettingPage />;
 				case PageEnum.chart: return <ChartPage />;
 				default: return <MainPage />;
 			}

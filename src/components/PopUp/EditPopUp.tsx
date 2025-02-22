@@ -2,20 +2,20 @@ import React, { useState } from 'react';
 import { Button, Modal, StyleSheet, Text, View } from 'react-native';
 import GlobalStyles from '../../css/GlobalCss';
 import useLanguage from '../../hook/useLanguage';
-import { IInputData } from '../../interface/DataInterface';
+import { IEditData } from '../../interface/DataInterface';
 import InputForm from '../Form/InputForm';
 
 const EditPopUp = ({
     data, onConfirm, onClose, onClear,
 }: {
-    data: IInputData,
-    onConfirm: (args: IInputData) => void,
+    data: IEditData,
+    onConfirm: (args: IEditData) => void,
     onClose: () => void,
-    onClear: (args: IInputData) => void,
+    onClear: (args: IEditData) => void,
 }) => {
     const language = useLanguage();
 
-    const [state, setState] = useState<IInputData>({...data});
+    const [state, setState] = useState<IEditData>({...data});
 
     return <>
         <Modal

@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { KeyValuePair } from '@react-native-async-storage/async-storage/lib/typescript/types';
 import { useEffect, useState } from 'react';
-import { ISavedList, IStorage } from '../interface/DataInterface';
+import { IHistoryData, ISumByDayData, ISumByNameData } from '../interface/DataInterface';
 
-const useLocalStorage = (): IStorage => {
+const useLocalStorage = () => {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
@@ -11,9 +11,9 @@ const useLocalStorage = (): IStorage => {
         return () => { setMessage(''); };
     }, [message]);
 
-    const set = async (key: string, payload: ISavedList) => {
+    const set = async (key: string, payload: IHistoryData | ISumByNameData | ISumByDayData) => {
         try {
-            if (payload.list.length > 0) {
+            if (Object.keys(payload).length > 0) {
                 await AsyncStorage.setItem(key, JSON.stringify(payload));
             }
 		} catch (e: any) {
@@ -22,7 +22,7 @@ const useLocalStorage = (): IStorage => {
     };
 
     const get = async (key: string) => {
-        let json: ISavedList = { list: [], daySum: 0, daySumDetail: {} };
+        let json: IHistoryData | ISumByNameData | ISumByDayData = { list: [], sum: 0 };
         try {
 			const result = await AsyncStorage.getItem(key);
             if (result) { json = JSON.parse(result); }
@@ -34,18 +34,26 @@ const useLocalStorage = (): IStorage => {
     };
 
     const getRange = async (keys: string[] = []) => {
-        let json: {[key: string]: ISavedList} = {};
+        let json: {[key: string]: IHistoryData | ISumByNameData | ISumByDayData} = {};
         try {
             const _keys = keys.length > 0 ? keys : await AsyncStorage.getAllKeys();
             const result: readonly KeyValuePair[] = await AsyncStorage.multiGet(_keys);
             result.forEach((value: KeyValuePair) => {
-                json[value[0]] = value[1] ? JSON.parse(value[1]) : [];
+                json[value[0]] = value[1] ? JSON.parse(value[1]) : {};
             });
             return json;
         } catch (e: any) {
             setMessage(e.message);
             return json;
         }
+    };
+
+    const remove = async (key: string) => {
+        try {
+			await AsyncStorage.removeItem(key);
+		} catch (e: any) {
+			setMessage(e.message);
+		}
     };
 
     const clear = async () => {
@@ -60,6 +68,7 @@ const useLocalStorage = (): IStorage => {
         set: set,
         get: get,
         getRange: getRange,
+        remove: remove,
         clear: clear,
         message: message,
     };

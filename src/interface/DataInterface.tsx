@@ -1,7 +1,6 @@
 import { GroupType } from '../enum/InputEnum';
 
 export interface IInputData {
-    id: number,
     timestamp: number,
     name: string,
     value: string,
@@ -9,15 +8,9 @@ export interface IInputData {
     tag: string,
 }
 
-export interface ISavedData extends Omit<IInputData, 'value' | 'tag'> {
-    value: number,
-    tag: string[],
-}
-
-export interface ISavedList {
-    list: ISavedData[],
-    daySum: number,
-    daySumDetail: { [key: string]: number },
+export interface IEditData extends IInputData {
+    id: number;
+    uniqueId: string;
 }
 
 export interface IInputDate {
@@ -28,11 +21,22 @@ export interface IInputDate {
     timestamp: number,
 }
 
-export interface IStorage {
-    set: (key: string, payload: ISavedList) => Promise<void>;
-    get: (key: string) => Promise<ISavedList>;
-    getRange: (keys?: string[]) => Promise<{ [key: string]: ISavedList }>;
-    message: string;
-    clear?: () => Promise<void>;
-    logAllRecord?: () => Promise<void>;
+export interface IHistoryData {
+    id: number,
+    uniqueId: string,
+    timestamp: number,
+    name: string,
+    value: number,
+    group: keyof typeof GroupType | '',
+    tag: string[],
+}
+
+export interface ISumByNameData {
+    list: string[],
+    sum: number,
+}
+
+export interface ISumByDayData {
+    list: string[],
+    sum: number,
 }
