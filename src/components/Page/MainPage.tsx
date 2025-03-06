@@ -50,7 +50,7 @@ const MainPage = () => {
 		for (const d of getDayInMonth(Number(_year), Number(_month))) { keys.push(`${_year}-${_month}-${d}`); }
 		const byDay = await localStorage.getRange(keys);
 		if (byDay) {
-			for (const _key of Object.keys(byDay)) {
+			const dayPromises = Object.keys(byDay).map(async (_key) => {
 				const _summary = byDay[_key] as ISumByDayData;
 				if (_summary.list?.length > 0) {
 					const today = await localStorage.getRange(_summary.list);
@@ -65,7 +65,8 @@ const MainPage = () => {
 					prev[_key] = _summary;
 					return {...prev};
 				});
-			}
+			});
+			await Promise.all(dayPromises);
 			setDate({dateString: `${_year}-${_month}-${_day}`, timestamp: new Date(`${_year}-${_month}-${_day}`).valueOf(), year: _year, month: _month, day: _day});
 		}
 	};
@@ -96,9 +97,12 @@ const MainPage = () => {
 		};
 
 		const newDay = { list: [...byDay.list, item.uniqueId], sum: addNumber([byDay.sum, value]) };
-		await localStorage.set(key, newDay);
-		await localStorage.set(item.name, {list: [...(byName.list), item.uniqueId], sum: addNumber([byName.sum, value])});
-		await localStorage.set(item.uniqueId, item);
+
+		await Promise.all([
+			localStorage.set(key, newDay),
+			localStorage.set(item.name, {list: [...(byName.list), item.uniqueId], sum: addNumber([byName.sum, value])}),
+			localStorage.set(item.uniqueId, item),
+		]);
 
 		setHistoryList(prev => {
 			prev[item.uniqueId] = item;

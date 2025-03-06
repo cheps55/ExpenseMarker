@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { KeyValuePair } from '@react-native-async-storage/async-storage/lib/typescript/types';
 import { useEffect, useState } from 'react';
+import { LocalStorageKey } from '../enum/CollectionEnum';
 import { IHistoryData, ISumByDayData, ISumByNameData } from '../interface/DataInterface';
 import { isSumByNameData } from '../util/ValidationUtil';
 
@@ -52,7 +53,7 @@ const useLocalStorage = () => {
     const getAllNameKeys = async () => {
         try {
             const _keys = await AsyncStorage.getAllKeys();
-            return [...new Set(_keys.filter(x => isSumByNameData(x)))];
+            return [...new Set(_keys.filter(x => isSumByNameData(x) && x !== LocalStorageKey.deleteRecord))];
         } catch (e: any) {
             setMessage(e.message);
             return [];

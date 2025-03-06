@@ -7,5 +7,4 @@ export const CloudCollection = Object.freeze({
 
 export const LocalStorageKey = Object.freeze({
     deleteRecord: 'deleteRecord',
-    nameList: 'nameList',
 });
