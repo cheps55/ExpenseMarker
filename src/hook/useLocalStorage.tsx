@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { KeyValuePair } from '@react-native-async-storage/async-storage/lib/typescript/types';
 import { useEffect, useState } from 'react';
 import { IHistoryData, ISumByDayData, ISumByNameData } from '../interface/DataInterface';
+import { isSumByNameData } from '../util/ValidationUtil';
 
 const useLocalStorage = () => {
     const [message, setMessage] = useState('');
@@ -48,6 +49,16 @@ const useLocalStorage = () => {
         }
     };
 
+    const getAllNameKeys = async () => {
+        try {
+            const _keys = await AsyncStorage.getAllKeys();
+            return [...new Set(_keys.filter(x => isSumByNameData(x)))];
+        } catch (e: any) {
+            setMessage(e.message);
+            return [];
+        }
+    };
+
     const remove = async (key: string) => {
         try {
 			await AsyncStorage.removeItem(key);
@@ -70,6 +81,7 @@ const useLocalStorage = () => {
         getRange: getRange,
         remove: remove,
         clear: clear,
+        getAllNameKeys: getAllNameKeys,
         message: message,
     };
 };
