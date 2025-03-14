@@ -84,8 +84,8 @@ const MainPage = () => {
 		const byDay = (await localStorage.get(key)) as ISumByDayData;
 		const byName = (await localStorage.get(addData.name)) as ISumByNameData;
 
-		const value = Number(addData.value)
-		const id = byDay.list.length > 0 ? byDay.list.length : 1;
+		const value = Number(addData.value);
+		const id = byDay.list.length > 0 ? byDay.list.length + 1 : 1;
 		const item = {
 			id: id,
 			uniqueId: String(addData.timestamp + id),
