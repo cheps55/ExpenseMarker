@@ -6,7 +6,7 @@ import useFirebase from '../../hook/useFirebase';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
 
-const ChartPage = () => {
+const SearchListPage = () => {
 	const localStorage = useLocalStorage();
 	const cloudStorage = useFirebase();
 	const language = useLanguage();
@@ -41,4 +41,4 @@ const styles = StyleSheet.create({
 	group_entertainment: GlobalStyles.dropdown.group_entertainment,
 });
 
-export default ChartPage;
+export default SearchListPage;

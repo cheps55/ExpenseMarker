@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
 import BottomBar from './components/BottomBar/BottomBar';
-import ChartPage from './components/Page/ChartPage';
 import MainPage from './components/Page/MainPage';
+import SearchListPage from './components/Page/SearchListPage';
 import SettingPage from './components/Page/SettingPage';
 import { PageEnum } from './enum/PageEnum';
 import useAuth from './hook/useAuth';
@@ -17,7 +17,7 @@ function App() {
 		{(() => {
 			switch(page) {
 				case PageEnum.setting: return <SettingPage />;
-				case PageEnum.chart: return <ChartPage />;
+				case PageEnum.chart: return <SearchListPage />;
 				default: return <MainPage />;
 			}
 		})()}
