@@ -1,5 +1,5 @@
 export const PageEnum = Object.freeze({
     main: 'main',
-    chart: 'chart',
+    search: 'search',
     setting: 'setting',
 });

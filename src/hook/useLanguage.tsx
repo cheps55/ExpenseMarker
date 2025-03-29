@@ -80,9 +80,9 @@ const Lang: ILanguage = Object.freeze({
         'en': 'Main',
         'zh': '首頁',
     },
-    'page.chart': {
-        'en': 'Chart',
-        'zh': '圖表',
+    'page.searchPage': {
+        'en': 'Search',
+        'zh': '搜尋',
     },
     'page.setting': {
         'en': 'Setting',

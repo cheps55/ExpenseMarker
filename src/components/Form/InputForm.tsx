@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import GlobalStyles from '../../css/GlobalCss';
 import { GroupType } from '../../enum/InputEnum';
 import useLanguage from '../../hook/useLanguage';
 import { IEditData, IInputData } from '../../interface/DataInterface';
+import SuggestionInput, { SuggestionInputType } from '../Input/SuggestionInput';
+
+type GroupItem = {label: string, value: keyof typeof GroupType};
 
 const InputForm = ({
     state, setState, suggestionList = [],
@@ -16,9 +19,7 @@ const InputForm = ({
     const { name, value, group, tag } = state;
     const language = useLanguage();
 
-    const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
-
-    const dropdownItem: {label: string, value: keyof typeof GroupType}[] = useMemo(() => {
+    const dropdownItem: GroupItem[] = useMemo(() => {
         return Object.keys(GroupType).map(key => ({value: key as keyof typeof GroupType, label: language.get(`dropdown.${key}`)}));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -30,39 +31,14 @@ const InputForm = ({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state]);
 
-    const handleNameChange = (text: string) => {
-        setState((prev: any) => ({ ...prev, name: text }));
-        if (text.length > 0) {
-            const filtered = suggestionList.filter(suggestion => suggestion.toLowerCase().includes(text.toLowerCase()));
-            setFilteredSuggestions(filtered);
-        } else {
-            setFilteredSuggestions([]);
-        }
-    };
+    const setName = ({text}: SuggestionInputType) => { setState((prev: any) => ({...prev, name: text})); };
 
     return <>
-        <View style={styles.nameInput}>
-            <TextInput
-                onChangeText={handleNameChange}
-                value={name}
-                placeholder={language.get('shop.name')}
-            />
-            {filteredSuggestions.length > 0 && (
-                <View style={styles.suggestionsContainer}>
-                    {filteredSuggestions.map((suggestion, index) => (
-                        <Pressable
-                            key={index}
-                            onPress={() => {
-                                setState((prev: any) => ({ ...prev, name: suggestion }));
-                                setFilteredSuggestions([]);
-                            }}
-                        >
-                            <Text style={styles.suggestionItem}>{suggestion}</Text>
-                        </Pressable>
-                    ))}
-                </View>
-            )}
-        </View>
+        <SuggestionInput
+            state={name}
+            setState={setName}
+            suggestionList={suggestionList}
+        />
         <TextInput
             onChangeText={e => setState((prev: any) => ({...prev, value: e}))}
             value={String(value)}
@@ -74,7 +50,7 @@ const InputForm = ({
             onChange={e => setState((prev: any) => ({...prev, group: e.value}))}
             data={dropdownItem}
             selectedTextStyle={styles[`group_${group}`]}
-            renderItem={(item) => {
+            renderItem={(item: GroupItem) => {
                 return <View style={[styles.item, styles[`group_${item.value}`]]}>
                     <Text style={styles.textItem}>{item.label}</Text>
                 </View>;
