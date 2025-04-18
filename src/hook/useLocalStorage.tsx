@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { KeyValuePair } from '@react-native-async-storage/async-storage/lib/typescript/types';
 import { useEffect, useState } from 'react';
 import { LocalStorageKey } from '../enum/CollectionEnum';
-import { IHistoryData, ISumByDayData, ISumByNameData } from '../interface/DataInterface';
+import { IHistoryData, ISumData } from '../interface/DataInterface';
 import { isSumByNameData } from '../util/ValidationUtil';
 
 const useLocalStorage = () => {
@@ -13,7 +13,7 @@ const useLocalStorage = () => {
         return () => { setMessage(''); };
     }, [message]);
 
-    const set = async (key: string, payload: IHistoryData | ISumByNameData | ISumByDayData) => {
+    const set = async (key: string, payload: IHistoryData | ISumData) => {
         try {
             if (Object.keys(payload).length > 0) {
                 await AsyncStorage.setItem(key, JSON.stringify(payload));
@@ -24,7 +24,7 @@ const useLocalStorage = () => {
     };
 
     const get = async (key: string) => {
-        let json: IHistoryData | ISumByNameData | ISumByDayData = { list: [], sum: 0 };
+        let json: IHistoryData | ISumData = { list: [], sum: 0 };
         try {
 			const result = await AsyncStorage.getItem(key);
             if (result) { json = JSON.parse(result); }
@@ -36,7 +36,7 @@ const useLocalStorage = () => {
     };
 
     const getRange = async (keys: string[] = []) => {
-        let json: {[key: string]: IHistoryData | ISumByNameData | ISumByDayData} = {};
+        let json: {[key: string]: IHistoryData | ISumData} = {};
         try {
             const _keys = keys.length > 0 ? keys : await AsyncStorage.getAllKeys();
             const result: readonly KeyValuePair[] = await AsyncStorage.multiGet(_keys);

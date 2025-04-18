@@ -1,7 +1,7 @@
 import { collection, deleteDoc, doc, getDocs, getFirestore, query, setDoc, where } from '@react-native-firebase/firestore';
 import { useEffect, useState } from 'react';
 import { CloudCollection } from '../enum/CollectionEnum';
-import { IHistoryData, ISumByDayData, ISumByNameData } from '../interface/DataInterface';
+import { IHistoryData, ISumData } from '../interface/DataInterface';
 
 const db = getFirestore();
 const DocumentId = '__name__';
@@ -14,7 +14,7 @@ const useFirebase = () => {
         return () => { setMessage(''); };
     }, [message]);
 
-    const set = async (collectionName: string, key: string, payload: IHistoryData | ISumByNameData | ISumByDayData) => {
+    const set = async (collectionName: string, key: string, payload: IHistoryData | ISumData) => {
         try {
             await setDoc(doc(collection(db, collectionName), key), payload);
         } catch (e: any) {
@@ -23,7 +23,7 @@ const useFirebase = () => {
     };
 
     const get = async (collectionName: string, key: string) => {
-        let json: IHistoryData | ISumByNameData | ISumByDayData = { list: [], sum: 0 };
+        let json: IHistoryData | ISumData = { list: [], sum: 0 };
         try {
             const q = query(collection(db, collectionName), where(DocumentId, '==', key));
             const result = await getDocs(q);
@@ -36,7 +36,7 @@ const useFirebase = () => {
     };
 
     const getRange = async (collectionName: string, keys: string[] = []) => {
-        let json: {[key: string]: IHistoryData | ISumByNameData | ISumByDayData} = {};
+        let json: {[key: string]: IHistoryData | ISumData} = {};
         try {
             let q;
             if (keys.length > 0) {

@@ -5,7 +5,7 @@ import GlobalStyles from '../../css/GlobalCss';
 import { LocalStorageKey } from '../../enum/CollectionEnum';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
-import { IEditData, IHistoryData, IInputData, IInputDate, ISumByDayData, ISumByNameData } from '../../interface/DataInterface';
+import { IEditData, IHistoryData, IInputData, IInputDate, ISumData } from '../../interface/DataInterface';
 import { getDayInMonth } from '../../util/DateTimeUtil';
 import { addNumber, formatNumber, subtractNumber } from '../../util/NumberUtil';
 import InputForm from '../Form/InputForm';
@@ -15,7 +15,7 @@ const MainPage = () => {
 	const localStorage = useLocalStorage();
 	const language = useLanguage();
 
-	const [listByDay, setListByDay] = useState<{[key: string]: ISumByDayData}>({});
+	const [listByDay, setListByDay] = useState<{[key: string]: ISumData}>({});
 	const [historyList, setHistoryList] = useState<{[key: string]: IHistoryData}>({});
 	const initialInputData: IInputData = { timestamp: 0, name: '', value: '', group: '', tag: '' };
 	const [inputData, setInputData] = useState<IInputData>(initialInputData);
@@ -51,7 +51,7 @@ const MainPage = () => {
 		const byDay = await localStorage.getRange(keys);
 		if (byDay) {
 			const dayPromises = Object.keys(byDay).map(async (_key) => {
-				const _summary = byDay[_key] as ISumByDayData;
+				const _summary = byDay[_key] as ISumData;
 				if (_summary.list?.length > 0) {
 					const today = await localStorage.getRange(_summary.list);
 					for (const timestampKey of Object.keys(today)) {
@@ -81,8 +81,8 @@ const MainPage = () => {
 	};
 
 	const onConfirm = async (addData: IInputData) => {
-		const byDay = (await localStorage.get(key)) as ISumByDayData;
-		const byName = (await localStorage.get(addData.name)) as ISumByNameData;
+		const byDay = (await localStorage.get(key)) as ISumData;
+		const byName = (await localStorage.get(addData.name)) as ISumData;
 
 		const value = Number(addData.value);
 		const id = byDay.list.length > 0 ? byDay.list.length + 1 : 1;
@@ -94,6 +94,7 @@ const MainPage = () => {
 			value: value,
 			group: addData.group,
 			tag: addData.tag.length > 0 ? addData.tag.split(',') : [],
+            updated: Date.now(),
 		};
 
 		const newDay = { list: [...byDay.list, item.uniqueId], sum: addNumber([byDay.sum, value]) };
@@ -124,10 +125,11 @@ const MainPage = () => {
 			...editData,
 			value: Number(editData.value),
 			tag: editData.tag.length > 0 ? editData.tag.split(',') : [],
+            updated: Date.now(),
 		};
 
-		let byNameOld = (await localStorage.get(oldData.name)) as ISumByNameData;
-		let byNameNew = (await localStorage.get(editData.name)) as ISumByNameData;
+		let byNameOld = (await localStorage.get(oldData.name)) as ISumData;
+		let byNameNew = (await localStorage.get(editData.name)) as ISumData;
 		if (oldData.name !== editData.name) {
 			byNameOld.list = byNameOld.list.filter(x => x !== oldData.uniqueId);
 			byNameOld.sum = subtractNumber([byNameOld.sum, oldData.value]);
@@ -144,7 +146,7 @@ const MainPage = () => {
 			await localStorage.set(oldData.name, byNameOld);
 		}
 
-		let byDay = (await localStorage.get(key)) as ISumByDayData;
+		let byDay = (await localStorage.get(key)) as ISumData;
 		byDay.sum = subtractNumber([byDay.sum, oldData.value]);
 		byDay.sum = addNumber([byDay.sum, Number(editData.value)]);
 		await localStorage.set(key, byDay);
@@ -167,7 +169,7 @@ const MainPage = () => {
 	};
 
 	const onClear = async (editData: IEditData) => {
-		let byName = (await localStorage.get(editData.name)) as ISumByNameData;
+		let byName = (await localStorage.get(editData.name)) as ISumData;
 		byName.list = byName.list.filter(x => x !== editData.uniqueId);
 		byName.sum = subtractNumber([byName.sum, Number(editData.value)]);
 		if (byName.list.length <= 1) {
@@ -176,7 +178,7 @@ const MainPage = () => {
 			await localStorage.set(editData.name, byName);
 		}
 
-		let byDay = (await localStorage.get(key)) as ISumByDayData;
+		let byDay = (await localStorage.get(key)) as ISumData;
 		byDay.list = byDay.list.filter(x => x !== editData.uniqueId);
 		byDay.sum = subtractNumber([byDay.sum, Number(editData.value)]);
 		if (byDay.list.length <= 1) {
@@ -187,7 +189,7 @@ const MainPage = () => {
 
 		await localStorage.remove(editData.uniqueId);
 
-		const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumByDayData;
+		const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
 		let _deleteList = [...deletedList.list, editData.uniqueId];
 		if (byName.list.length <= 1) { _deleteList = [..._deleteList, editData.name]; }
 		if (byDay.list.length <= 1) { _deleteList = [..._deleteList, key]; }

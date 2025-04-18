@@ -31,12 +31,7 @@ export interface IHistoryData {
     tag: string[],
 }
 
-export interface ISumByNameData {
-    list: string[],
-    sum: number,
-}
-
-export interface ISumByDayData {
+export interface ISumData {
     list: string[],
     sum: number,
 }

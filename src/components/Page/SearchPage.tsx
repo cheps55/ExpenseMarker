@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
-import { IHistoryData, ISumByNameData } from '../../interface/DataInterface';
+import { IHistoryData, ISumData } from '../../interface/DataInterface';
 import { getFormatDate } from '../../util/DateTimeUtil';
 import { addNumber } from '../../util/NumberUtil';
 import SuggestionInput, { SuggestionInputType } from '../Input/SuggestionInput';
@@ -33,7 +33,7 @@ const SearchPage = () => {
     };
 
     const getRecord = async () => {
-        const result = (await localStorage.get(text)) as ISumByNameData;
+        const result = (await localStorage.get(text)) as ISumData;
         if (result && result.list.length > 0) {
             const _list = (await localStorage.getRange(result.list)) as {[key: string]: IHistoryData};
         setList(_list);

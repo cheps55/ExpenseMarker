@@ -5,7 +5,7 @@ import { CloudCollection, LocalStorageKey } from '../../enum/CollectionEnum';
 import useFirebase from '../../hook/useFirebase';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
-import { ISumByDayData } from '../../interface/DataInterface';
+import { ISumData } from '../../interface/DataInterface';
 import { isDeletedList, isHistoryData, isSumByDayData, isSumByNameData } from '../../util/ValidationUtil';
 import ConfirmPopUp from '../PopUp/ConfirmPopUp';
 
@@ -50,7 +50,7 @@ const SettingPage = () => {
             const deleted = Object.keys(all).filter(key => isDeletedList(key));
             if (all) {
                 if (deleted.length > 0) {
-                    for (const key of (all[LocalStorageKey.deleteRecord] as ISumByDayData).list) {
+                    for (const key of (all[LocalStorageKey.deleteRecord] as ISumData).list) {
                         let collection: string = CloudCollection.History;
                         if (isSumByNameData(key)) { collection = CloudCollection.SumByName; }
                         if (isSumByDayData(key)) { collection = CloudCollection.SumByDay; }
