@@ -128,6 +128,8 @@ const MainPage = () => {
             updated: Date.now(),
 		};
 
+        let promiseList: Promise<void>[] = [];
+
 		let byNameOld = (await localStorage.get(oldData.name)) as ISumData;
 		let byNameNew = (await localStorage.get(editData.name)) as ISumData;
 		if (oldData.name !== editData.name) {
@@ -137,21 +139,32 @@ const MainPage = () => {
 			byNameNew.list = [...byNameNew.list, editData.uniqueId];
 			byNameNew.sum = addNumber([byNameNew.sum, Number(editData.value)]);
 
-			if (byNameOld.list?.length <= 1) {await localStorage.remove(oldData.name);}
-			if (byNameOld.list?.length > 1) { await localStorage.set(oldData.name, byNameOld); }
-			await localStorage.set(editData.name, byNameNew);
+			if (byNameOld.list?.length <= 1) {
+                const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
+                const _deleteList = [...deletedList.list, oldData.name];
+                promiseList.push(...[
+                    localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1}),
+                    localStorage.remove(oldData.name),
+                ]);
+
+            }
+			if (byNameOld.list?.length > 1) { promiseList.push(localStorage.set(oldData.name, byNameOld)); }
+            promiseList.push(localStorage.set(editData.name, byNameNew));
 		} else {
 			byNameOld.sum = subtractNumber([byNameOld.sum, oldData.value]);
 			byNameOld.sum = addNumber([byNameOld.sum, Number(editData.value)]);
-			await localStorage.set(oldData.name, byNameOld);
+			promiseList.push(localStorage.set(oldData.name, byNameOld));
 		}
 
 		let byDay = (await localStorage.get(key)) as ISumData;
 		byDay.sum = subtractNumber([byDay.sum, oldData.value]);
 		byDay.sum = addNumber([byDay.sum, Number(editData.value)]);
-		await localStorage.set(key, byDay);
+		promiseList.push(...[
+            localStorage.set(key, byDay),
+            localStorage.set(editData.uniqueId, newData),
+        ]);
 
-		await localStorage.set(editData.uniqueId, newData);
+        await Promise.all(promiseList);
 
 		setHistoryList(prev => {
 			prev[editData.uniqueId] = newData;
@@ -169,31 +182,36 @@ const MainPage = () => {
 	};
 
 	const onClear = async (editData: IEditData) => {
+        let promiseList: Promise<void>[] = [];
+
 		let byName = (await localStorage.get(editData.name)) as ISumData;
 		byName.list = byName.list.filter(x => x !== editData.uniqueId);
 		byName.sum = subtractNumber([byName.sum, Number(editData.value)]);
 		if (byName.list.length <= 1) {
-			await localStorage.remove(editData.name);
+			promiseList.push(localStorage.remove(editData.name));
 		} else {
-			await localStorage.set(editData.name, byName);
+			promiseList.push(localStorage.set(editData.name, byName));
 		}
 
 		let byDay = (await localStorage.get(key)) as ISumData;
 		byDay.list = byDay.list.filter(x => x !== editData.uniqueId);
 		byDay.sum = subtractNumber([byDay.sum, Number(editData.value)]);
 		if (byDay.list.length <= 1) {
-			await localStorage.remove(key);
+			promiseList.push(localStorage.remove(key));
 		} else {
-			await localStorage.set(key, byDay);
+			promiseList.push(localStorage.set(key, byDay));
 		}
-
-		await localStorage.remove(editData.uniqueId);
 
 		const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
 		let _deleteList = [...deletedList.list, editData.uniqueId];
 		if (byName.list.length <= 1) { _deleteList = [..._deleteList, editData.name]; }
 		if (byDay.list.length <= 1) { _deleteList = [..._deleteList, key]; }
-		await localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1});
+		promiseList.push(...[
+            localStorage.remove(editData.uniqueId),
+            localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1}),
+        ]);
+
+		await Promise.all(promiseList);
 
 		setHistoryList(prev => {
 			delete prev[editData.uniqueId];

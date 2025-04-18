@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LocalStorageKey } from '../../enum/CollectionEnum';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
 import { IHistoryData, ISumData } from '../../interface/DataInterface';
@@ -49,15 +50,25 @@ const SearchPage = () => {
         let byNameList: string[] = Object.keys(_list);
         let byNameSum = 0;
 
+        let promiseList: Promise<void>[] = []; 
+
         for (let i = 0; i < byNameList.length; i++) {
             const key: string = byNameList[i];
             let item = _list[key];
             item.name = renameText;
             byNameSum = addNumber([byNameSum, item.value]);
-            await localStorage.set(key, item);
+            promiseList.push(localStorage.set(key, item));
         }
-        await localStorage.set(renameText, {list: byNameList, sum: byNameSum});
-        await localStorage.remove(text);
+
+        const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
+        const _deleteList = [...deletedList.list, text];
+        promiseList.push(...[
+            localStorage.set(renameText, {list: byNameList, sum: byNameSum}),
+            localStorage.remove(text),
+            localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1}),
+        ]);
+
+        await Promise.all(promiseList);
     };
 
 	return (
