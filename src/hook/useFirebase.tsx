@@ -1,29 +1,33 @@
-import firestore from '@react-native-firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, getFirestore, query, setDoc, where } from '@react-native-firebase/firestore';
 import { useEffect, useState } from 'react';
 import { CloudCollection } from '../enum/CollectionEnum';
 import { IHistoryData, ISumByDayData, ISumByNameData } from '../interface/DataInterface';
 
+const db = getFirestore();
+const DocumentId = '__name__';
+
 const useFirebase = () => {
     const [message, setMessage] = useState('');
 
-     useEffect(() => {
+    useEffect(() => {
         if (message.length > 0) { console.log('Firebase Storage Error Message: ', message); }
         return () => { setMessage(''); };
     }, [message]);
 
-    const set = async (collection: string, key: string, payload: IHistoryData | ISumByNameData | ISumByDayData) => {
+    const set = async (collectionName: string, key: string, payload: IHistoryData | ISumByNameData | ISumByDayData) => {
         try {
-            firestore().collection(collection).doc(key).set(payload);
+            await setDoc(doc(collection(db, collectionName), key), payload);
         } catch (e: any) {
             setMessage(e.message);
         }
     };
 
-    const get = async (collection: string, key: string) => {
+    const get = async (collectionName: string, key: string) => {
         let json: IHistoryData | ISumByNameData | ISumByDayData = { list: [], sum: 0 };
         try {
-           const result = await firestore().collection(collection).where(firestore.FieldPath.documentId(), '==', key).get();
-            if (result?.docs.length > 0) { json = result?.docs?.[0].data() as any; }
+            const q = query(collection(db, collectionName), where(DocumentId, '==', key));
+            const result = await getDocs(q);
+            if (!result.empty) { json = result.docs[0].data() as any; }
             return json;
         } catch (e: any) {
             setMessage(e.message);
@@ -31,17 +35,18 @@ const useFirebase = () => {
         }
     };
 
-    const getRange = async (collection: string, keys: string[] = []) => {
+    const getRange = async (collectionName: string, keys: string[] = []) => {
         let json: {[key: string]: IHistoryData | ISumByNameData | ISumByDayData} = {};
         try {
-            let result;
+            let q;
             if (keys.length > 0) {
-                result = await firestore().collection(collection).where(firestore.FieldPath.documentId(), 'in', keys).get();
+                q = query(collection(db, collectionName), where(DocumentId, 'in', keys));
             } else {
-                result = await firestore().collection(collection).get();
+                q = collection(db, collectionName);
             }
-            result?.docs.forEach(doc => {
-                json[doc.id] = doc.data() as any;
+            const result = await getDocs(q);
+            result.forEach(_doc => {
+                json[_doc.id] = _doc.data() as any;
             });
             return json;
         } catch (e: any) {
@@ -50,20 +55,20 @@ const useFirebase = () => {
         }
     };
 
-    const remove = async (collection: string, key: string) => {
+    const remove = async (collectionName: string, key: string) => {
         try {
-            await firestore().collection(collection).doc(key).delete();
+            await deleteDoc(doc(collection(db, collectionName), key));
         } catch (e: any) {
             setMessage(e.message);
         }
-	};
+    };
 
     const logAllRecord = async () => {
-        for (const collection of Object.values(CloudCollection)) {
-            const result = await getRange(collection);
+        for (const collectionName of Object.values(CloudCollection)) {
+            const result = await getRange(collectionName);
             console.log(JSON.stringify(result));
         }
-	};
+    };
 
     return {
         set: set,
