@@ -20,6 +20,10 @@ const Lang: ILanguage = Object.freeze({
         'en': '(No Internet)',
         'zh': '(無網路)',
     },
+    'delete_local_data': {
+        'en': 'Delete local data',
+        'zh': '刪除本地資料',
+    },
     'sync.from': {
         'en': 'Sync from cloud ↓',
         'zh': '同步自雲端 ↓',
@@ -59,6 +63,10 @@ const Lang: ILanguage = Object.freeze({
     'tag.description': {
         'en': 'Tag (Use "," to split tag)',
         'zh': '標籤 (使用 “,” 分割標籤)',
+    },
+    'rename': {
+        'en': 'Rename',
+        'zh': '重新命名',
     },
     'confirm': {
         'en': 'Confirm',

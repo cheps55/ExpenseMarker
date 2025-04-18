@@ -5,15 +5,17 @@ import useLanguage from '../../hook/useLanguage';
 export type SuggestionInputType = { text: string, isExists: boolean };
 
 const SuggestionInput = ({
-    state, setState, suggestionList = [],
+    state, setState, suggestionList = [], placeholder = '',
 }: {
     state: string,
     setState: React.Dispatch<SuggestionInputType>
     suggestionList?: string[],
+    placeholder?: string,
 }) => {
     const language = useLanguage();
 
     const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
+    const [isFocused, setIsFocused] = useState(false);
 
     const handleNameChange = (text: string) => {
         let filtered: string[] = [];
@@ -34,17 +36,17 @@ const SuggestionInput = ({
             <TextInput
                 onChangeText={handleNameChange}
                 value={state}
-                placeholder={language.get('shop.name')}
+                placeholder={placeholder ? placeholder : language.get('shop.name')}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
             />
-            {filteredSuggestions.length > 0 && (
+            {isFocused && filteredSuggestions.length > 0 && (
                 <View style={styles.suggestionsContainer}>
-                    <ScrollView nestedScrollEnabled={true}>
+                    <ScrollView nestedScrollEnabled={true} keyboardShouldPersistTaps="handled">
                         {filteredSuggestions.map((suggestion, index) => (
                             <Pressable
                                 key={index}
-                                onPress={() => {
-                                    handleNameChange(suggestion);
-                                }}
+                                onPress={() => { handleNameChange(suggestion); }}
                             >
                                 <Text style={styles.suggestionItem}>{suggestion}</Text>
                             </Pressable>

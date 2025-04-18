@@ -81,7 +81,7 @@ const SettingPage = () => {
 	return <ScrollView contentInsetAdjustmentBehavior="automatic">
         <View style={styles.container}>
             <Button
-                title={`${'Delete all local'}`}
+                title={`${language.get('delete_local_data')}`}
                 color="red"
                 onPress={() => { onDeleteAllLocal(); }}
             />
