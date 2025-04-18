@@ -29,6 +29,10 @@ const SearchPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isExists]);
 
+    useEffect(() => {
+        setData((prev) => ({...prev, renameText: text}));
+    }, [text]);
+
     const init = async () => {
         setNameList(await localStorage.getAllNameKeys());
     };
@@ -37,7 +41,7 @@ const SearchPage = () => {
         const result = (await localStorage.get(text)) as ISumData;
         if (result && result.list.length > 0) {
             const _list = (await localStorage.getRange(result.list)) as {[key: string]: IHistoryData};
-        setList(_list);
+            setList(_list);
         }
     };
 
@@ -69,6 +73,7 @@ const SearchPage = () => {
         ]);
 
         await Promise.all(promiseList);
+        setData((prev) => ({...prev, text: '', renameText: '', isExists: false}));
     };
 
 	return (
@@ -88,7 +93,7 @@ const SearchPage = () => {
                 <Button
                     title={`${language.get('confirm')} ${language.get('rename')}`}
                     onPress={renameRecord}
-                    disabled={text.length === 0 || renameText.length === 0}
+                    disabled={(text.length === 0 || renameText.length === 0) && text !== renameText}
                 />
             </View>
             <ScrollView>
