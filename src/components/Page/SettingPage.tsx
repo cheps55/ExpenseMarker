@@ -12,7 +12,6 @@ import ConfirmPopUp from '../PopUp/ConfirmPopUp';
 const SyncType = Object.freeze({
     from: 'from',
     to: 'to',
-    oldToNew: 'oldToNew',
 })
 
 const SettingPage = () => {
@@ -24,39 +23,6 @@ const SettingPage = () => {
 
     const [syncType, setSyncType] = useState('');
     const [isConfirmPopUpOpen, setIsConfirmPopUpOpen] = useState(false);
-
-    const convertToNewStructure = async () => {
-        const cloud: any = await cloudStorage.getRange(CloudCollection.Record);
-        if (cloud) {
-            let list: any = {};
-            for (const key of Object.keys(cloud)) {
-                for (const item of cloud[key].list) {
-                    if (!list[item.name]) { list[item.name] = {}; }
-                    if (!list[key]) { list[key] = {}; }
-                    const _item = {...item, uniqueId: String(item.timestamp + item.id)};
-                    list = {
-                        ...list,
-                        [_item.name]: {
-                            ...list[_item.name],
-                            sum: (list[_item.name].sum ?? 0) + _item.value,
-                            list: [...list[_item.name].list ?? [], _item.uniqueId],
-                        },
-                        [key]: {
-                            ...list[key],
-                            sum: (list[key].sum ?? 0) + _item.value,
-                            list: [...list[key].list ?? [], _item.uniqueId],
-                        },
-                    };
-                    await cloudStorage.set(CloudCollection.History, String(_item.uniqueId), _item);
-                }
-            }
-
-            for (const key of Object.keys(list)) {
-                const _collection = key.includes('-') ? CloudCollection.SumByDay : CloudCollection.SumByName;
-                await cloudStorage.set(_collection, key, list[key]);
-            }
-        }
-    };
 
     const onSync = async () => {
         if (syncType === SyncType.from) {
@@ -105,9 +71,6 @@ const SettingPage = () => {
             }
         }
 
-        if (syncType === SyncType.oldToNew) {
-            await convertToNewStructure();
-        }
         setIsConfirmPopUpOpen(false);
     };
 
@@ -121,12 +84,6 @@ const SettingPage = () => {
                 title={`${'Delete all local'}`}
                 color="red"
                 onPress={() => { onDeleteAllLocal(); }}
-            />
-            <Button
-                title={`${'Old to new data'}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
-                color="purple"
-                onPress={() => { setSyncType(SyncType.oldToNew); setIsConfirmPopUpOpen(true); }}
-                disabled={!isConnected}
             />
             <Button
                 title={`${language.get('sync.from')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}

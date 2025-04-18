@@ -1,5 +1,4 @@
 export const CloudCollection = Object.freeze({
-    Record: 'Record',
     History: 'History',
     SumByDay: 'SumByDay',
     SumByName: 'SumByName',
