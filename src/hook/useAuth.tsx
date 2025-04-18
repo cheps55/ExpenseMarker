@@ -1,12 +1,11 @@
-import auth from '@react-native-firebase/auth';
+import { getAuth, signInWithEmailAndPassword } from '@react-native-firebase/auth';
 import { useEffect } from 'react';
 import { Authentication } from '../authentication/authentication';
 
 const useAuth = () => {
 
     useEffect(() => {
-        auth()
-        .signInWithEmailAndPassword(Authentication.email, Authentication.password)
+        signInWithEmailAndPassword(getAuth(), Authentication.email, Authentication.password)
         .then(() => {
             console.log('User account signed in!');
         })
