@@ -24,7 +24,7 @@ const MainPage = () => {
 	const key = `${year}-${month}-${day}`;
 
 	const [hasUpdate, setHasUpdate] = useState(false);
-	const [selectedEdit, setSelectedEdit] = useState<IEditData | {}>({});
+	const [selectedEdit, setSelectedEdit] = useState<IEditData>();
 	const [isEditPopUpOpen, setIsEditPopUpOpen] = useState(false);
 	const [nameList, setNameLust] = useState<string[]>([]);
 
@@ -80,7 +80,11 @@ const MainPage = () => {
 		);
 	};
 
-	const onConfirm = async (addData: IInputData) => {
+    const resetSelectedEdit = () => {
+		setSelectedEdit(undefined);
+    };
+
+	const onAdd = async (addData: IInputData) => {
 		const byDay = (await localStorage.get(key)) as ISumData;
 		const byName = (await localStorage.get(addData.name)) as ISumData;
 
@@ -121,24 +125,26 @@ const MainPage = () => {
 	};
 
 	const onEdit = async (editData: IEditData) => {
-		const oldData = historyList[editData.uniqueId];
+        const {uniqueId, name, value, tag } = editData;
+
+		const oldData = historyList[uniqueId];
 		const newData = {
 			...editData,
-			value: Number(editData.value),
-			tag: editData.tag.length > 0 ? editData.tag.split(',') : [],
+			value: Number(value),
+			tag: tag.length > 0 ? tag.split(',') : [],
             updated: Date.now(),
 		};
 
         let promiseList: Promise<void>[] = [];
 
 		let byNameOld = (await localStorage.get(oldData.name)) as ISumData;
-		let byNameNew = (await localStorage.get(editData.name)) as ISumData;
-		if (oldData.name !== editData.name) {
+		let byNameNew = (await localStorage.get(name)) as ISumData;
+		if (oldData.name !== name) {
 			byNameOld.list = byNameOld.list.filter(x => x !== oldData.uniqueId);
 			byNameOld.sum = subtractNumber([byNameOld.sum, oldData.value]);
 
-			byNameNew.list = [...byNameNew.list, editData.uniqueId];
-			byNameNew.sum = addNumber([byNameNew.sum, Number(editData.value)]);
+			byNameNew.list = [...byNameNew.list, uniqueId];
+			byNameNew.sum = addNumber([byNameNew.sum, newData.value]);
 
 			if (byNameOld.list?.length <= 1) {
                 const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
@@ -150,19 +156,19 @@ const MainPage = () => {
 
             }
 			if (byNameOld.list?.length > 1) { promiseList.push(localStorage.set(oldData.name, byNameOld)); }
-            promiseList.push(localStorage.set(editData.name, byNameNew));
+            promiseList.push(localStorage.set(name, byNameNew));
 		} else {
 			byNameOld.sum = subtractNumber([byNameOld.sum, oldData.value]);
-			byNameOld.sum = addNumber([byNameOld.sum, Number(editData.value)]);
+			byNameOld.sum = addNumber([byNameOld.sum, newData.value]);
 			promiseList.push(localStorage.set(oldData.name, byNameOld));
 		}
 
 		let byDay = (await localStorage.get(key)) as ISumData;
 		byDay.sum = subtractNumber([byDay.sum, oldData.value]);
-		byDay.sum = addNumber([byDay.sum, Number(editData.value)]);
+		byDay.sum = addNumber([byDay.sum, newData.value]);
 		promiseList.push(...[
             localStorage.set(key, byDay),
-            localStorage.set(editData.uniqueId, newData),
+            localStorage.set(uniqueId, newData),
         ]);
 
         await Promise.all(promiseList);
@@ -178,9 +184,50 @@ const MainPage = () => {
 		});
 
 		setIsEditPopUpOpen(false);
-		setSelectedEdit({});
+		resetSelectedEdit();
 		setHasUpdate(prev => !prev);
 	};
+
+    const onBatchEdit = async (editData: IEditData) => {
+        let _list: { [key: string]: IHistoryData; } = {};
+        const result = (await localStorage.get(selectedEdit!.name)) as ISumData;
+
+        if (result && result.list.length > 0) {
+            _list = JSON.parse(JSON.stringify((await localStorage.getRange(result.list)) as {[key: string]: IHistoryData}));
+        }
+
+        let byNameList: string[] = Object.keys(_list);
+        let byNameSum = 0;
+
+        let promiseList: Promise<void>[] = [];
+
+        for (let i = 0; i < byNameList.length; i++) {
+            const _key: string = byNameList[i];
+            let item = _list[_key];
+            item.name = editData.name;
+            item.group = editData.group;
+            item.updated = Date.now();
+            byNameSum = addNumber([byNameSum, item.value]);
+            promiseList.push(localStorage.set(_key, item));
+            setHistoryList(prev => {
+                prev[item.uniqueId] = item;
+                return prev;
+            });
+        }
+
+        const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
+        const _deleteList = [...deletedList.list, selectedEdit!.name];
+        promiseList.push(...[
+            localStorage.set(editData.name, {list: byNameList, sum: byNameSum, updated: Date.now()}),
+            localStorage.remove(selectedEdit!.name),
+            localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1, updated: Date.now()}),
+        ]);
+
+        await Promise.all(promiseList);
+        setIsEditPopUpOpen(false);
+        resetSelectedEdit();
+        setHasUpdate(prev => !prev);
+    };
 
 	const onClear = async (editData: IEditData) => {
         let promiseList: Promise<void>[] = [];
@@ -225,7 +272,7 @@ const MainPage = () => {
 		});
 
 		setIsEditPopUpOpen(false);
-		setSelectedEdit({});
+		resetSelectedEdit();
 		setHasUpdate(prev => !prev);
 	};
 
@@ -273,7 +320,7 @@ const MainPage = () => {
             <InputForm state={inputData} setState={setInputData} suggestionList={nameList} />
             <Button
                 title={language.get('confirm')}
-                onPress={() => onConfirm({...inputData, ...date})}
+                onPress={() => onAdd({...inputData, ...date})}
                 disabled={isDisableConfirmButton()}
             />
             <Text style={styles.header}>
@@ -303,7 +350,8 @@ const MainPage = () => {
         </View>
         {isEditPopUpOpen && <EditPopUp
             data={selectedEdit as IEditData}
-            onConfirm={onEdit} onClose={() => {setSelectedEdit({}); setIsEditPopUpOpen(false);}}
+            onEdit={onEdit} onBatchEdit={onBatchEdit}
+            onClose={() => {resetSelectedEdit(); setIsEditPopUpOpen(false);}}
             onClear={onClear}
         />}
     </ScrollView>;

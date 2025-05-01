@@ -68,13 +68,13 @@ const Lang: ILanguage = Object.freeze({
         'en': 'Tag (Use "," to split tag)',
         'zh': '標籤 (使用 “,” 分割標籤)',
     },
-    'rename': {
-        'en': 'Rename',
-        'zh': '重新命名',
-    },
     'confirm': {
         'en': 'Confirm',
         'zh': '確認',
+    },
+    'batch_change_name_group': {
+        'en': 'Batch Change Name/Group',
+        'zh': '批量更改名稱/組別',
     },
     'clear': {
         'en': 'Clear',

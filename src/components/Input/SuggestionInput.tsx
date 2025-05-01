@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
         display: 'flex',
     },
     suggestionItem: {
-        padding: 10,
+        padding: 12,
         borderBottomWidth: 1,
         borderBottomColor: 'lightgray',
     },

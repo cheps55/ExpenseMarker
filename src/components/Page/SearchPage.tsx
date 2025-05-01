@@ -1,21 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LocalStorageKey } from '../../enum/CollectionEnum';
-import useLanguage from '../../hook/useLanguage';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import useLocalStorage from '../../hook/useLocalStorage';
 import { IHistoryData, ISumData } from '../../interface/DataInterface';
 import { getFormatDate } from '../../util/DateTimeUtil';
-import { addNumber } from '../../util/NumberUtil';
 import SuggestionInput, { SuggestionInputType } from '../Input/SuggestionInput';
 
-export type SearchPageInputType = SuggestionInputType & { renameText: string; }
-
 const SearchPage = () => {
-    const language = useLanguage();
 	const localStorage = useLocalStorage();
 
-	const [data, setData] = useState<SearchPageInputType>({text: '', renameText: '', isExists: false});
-	const { text, renameText, isExists } = data;
+	const [data, setData] = useState<SuggestionInputType>({text: '', isExists: false});
+	const { text, isExists } = data;
 	const [nameList, setNameList] = useState<string[]>([]);
     const [list, setList] = useState<{[key: string]: IHistoryData}>({});
 
@@ -49,34 +43,6 @@ const SearchPage = () => {
         setData((prev) => ({...prev, [field]: _data.text, isExists: _data.isExists }));
     };
 
-    const renameRecord = async () => {
-        const _list: { [key: string]: IHistoryData; } = JSON.parse(JSON.stringify(list));
-        let byNameList: string[] = Object.keys(_list);
-        let byNameSum = 0;
-
-        let promiseList: Promise<void>[] = []; 
-
-        for (let i = 0; i < byNameList.length; i++) {
-            const key: string = byNameList[i];
-            let item = _list[key];
-            item.name = renameText;
-            item.updated = Date.now();
-            byNameSum = addNumber([byNameSum, item.value]);
-            promiseList.push(localStorage.set(key, item));
-        }
-
-        const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
-        const _deleteList = [...deletedList.list, text];
-        promiseList.push(...[
-            localStorage.set(renameText, {list: byNameList, sum: byNameSum, updated: Date.now()}),
-            localStorage.remove(text),
-            localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1, updated: Date.now()}),
-        ]);
-
-        await Promise.all(promiseList);
-        setData((prev) => ({...prev, text: '', renameText: '', isExists: false}));
-    };
-
 	return (
 		<ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
             <View>
@@ -84,17 +50,6 @@ const SearchPage = () => {
                     state={text}
                     setState={(_data) => setState(_data, 'text')}
                     suggestionList={nameList}
-                />
-                <SuggestionInput
-                    state={renameText}
-                    setState={(_data) => setState(_data, 'renameText')}
-                    suggestionList={nameList}
-                    placeholder={language.get('rename')}
-                />
-                <Button
-                    title={`${language.get('confirm')} ${language.get('rename')}`}
-                    onPress={renameRecord}
-                    disabled={(text.length === 0 || renameText.length === 0) && text !== renameText}
                 />
             </View>
             <ScrollView>
