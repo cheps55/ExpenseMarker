@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import GlobalStyles from '../../css/GlobalCss';
-import { LocalStorageKey } from '../../enum/CollectionEnum';
+import { Action } from '../../enum/ActionEnum';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
 import { IEditData, IHistoryData, IInputData, IInputDate, ISumData } from '../../interface/DataInterface';
@@ -85,6 +85,9 @@ const MainPage = () => {
     };
 
 	const onAdd = async (addData: IInputData) => {
+        const actionLog = await localStorage.getActionLog();
+        let _actionLog = [...actionLog.list];
+
 		const byDay = (await localStorage.get(key)) as ISumData;
 		const byName = (await localStorage.get(addData.name)) as ISumData;
 
@@ -101,13 +104,19 @@ const MainPage = () => {
             updated: Date.now(),
 		};
 
-		const newDay = { list: [...byDay.list, item.uniqueId], sum: addNumber([byDay.sum, value]), updated: Date.now() };
+		const newDay = {list: [...byDay.list, item.uniqueId], sum: addNumber([byDay.sum, value]), updated: Date.now()};
         const newName = {list: [...(byName.list), item.uniqueId], sum: addNumber([byName.sum, value]), updated: Date.now()};
+        _actionLog.push(...[
+            {uniqueId: key, action: Action.update, updated: Date.now()},
+            {uniqueId: item.name, action: Action.update, updated: Date.now()},
+            {uniqueId: item.uniqueId, action: Action.update, updated: Date.now()},
+        ]);
 
 		await Promise.all([
 			localStorage.set(key, newDay),
 			localStorage.set(item.name, newName),
 			localStorage.set(item.uniqueId, item),
+            localStorage.setActionLog({list: _actionLog}),
 		]);
 
 		setHistoryList(prev => {
@@ -125,6 +134,9 @@ const MainPage = () => {
 	};
 
 	const onEdit = async (editData: IEditData) => {
+        const actionLog = await localStorage.getActionLog();
+        let _actionLog = [...actionLog.list];
+
         const {uniqueId, name, value, tag } = editData;
 
 		const oldData = historyList[uniqueId];
@@ -147,30 +159,35 @@ const MainPage = () => {
 			byNameNew.sum = addNumber([byNameNew.sum, newData.value]);
 
 			if (byNameOld.list?.length <= 1) {
-                const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
-                const _deleteList = [...deletedList.list, oldData.name];
-                promiseList.push(...[
-                    localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1, updated: Date.now()}),
-                    localStorage.remove(oldData.name),
-                ]);
-
+                _actionLog.push({uniqueId: oldData.name, action: Action.delete, updated: Date.now()});
+                promiseList.push(localStorage.remove(oldData.name));
             }
-			if (byNameOld.list?.length > 1) { promiseList.push(localStorage.set(oldData.name, byNameOld)); }
+			if (byNameOld.list?.length > 1) {
+                _actionLog.push({uniqueId: oldData.name, action: Action.update, updated: Date.now()});
+                promiseList.push(localStorage.set(oldData.name, byNameOld));
+            }
+            _actionLog.push({uniqueId: name, action: Action.update, updated: Date.now()});
             promiseList.push(localStorage.set(name, byNameNew));
 		} else {
 			byNameOld.sum = subtractNumber([byNameOld.sum, oldData.value]);
 			byNameOld.sum = addNumber([byNameOld.sum, newData.value]);
-			promiseList.push(localStorage.set(oldData.name, byNameOld));
+			_actionLog.push({uniqueId: oldData.name, action: Action.update, updated: Date.now()});
+            promiseList.push(localStorage.set(oldData.name, byNameOld));
 		}
 
 		let byDay = (await localStorage.get(key)) as ISumData;
 		byDay.sum = subtractNumber([byDay.sum, oldData.value]);
 		byDay.sum = addNumber([byDay.sum, newData.value]);
-		promiseList.push(...[
+		_actionLog.push(...[
+            {uniqueId: key, action: Action.update, updated: Date.now()},
+            {uniqueId: uniqueId, action: Action.update, updated: Date.now()},
+        ]);
+        promiseList.push(...[
             localStorage.set(key, byDay),
             localStorage.set(uniqueId, newData),
         ]);
 
+        promiseList.push(localStorage.setActionLog({list: _actionLog}));
         await Promise.all(promiseList);
 
 		setHistoryList(prev => {
@@ -189,12 +206,17 @@ const MainPage = () => {
 	};
 
     const onBatchEdit = async (editData: IEditData) => {
+        const actionLog = await localStorage.getActionLog();
+        let _actionLog = [...actionLog.list];
+
         let _list: { [key: string]: IHistoryData; } = {};
         const result = (await localStorage.get(selectedEdit!.name)) as ISumData;
 
         if (result && result.list.length > 0) {
             _list = JSON.parse(JSON.stringify((await localStorage.getRange(result.list)) as {[key: string]: IHistoryData}));
         }
+
+        const isNameChange = selectedEdit!.name !== editData.name;
 
         let byNameList: string[] = Object.keys(_list);
         let byNameSum = 0;
@@ -208,20 +230,24 @@ const MainPage = () => {
             item.group = editData.group;
             item.updated = Date.now();
             byNameSum = addNumber([byNameSum, item.value]);
+            _actionLog.push({uniqueId: item.uniqueId, action: Action.update, updated: Date.now()});
             promiseList.push(localStorage.set(_key, item));
+
             setHistoryList(prev => {
                 prev[item.uniqueId] = item;
                 return prev;
             });
         }
 
-        const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
-        const _deleteList = [...deletedList.list, selectedEdit!.name];
-        promiseList.push(...[
-            localStorage.set(editData.name, {list: byNameList, sum: byNameSum, updated: Date.now()}),
-            localStorage.remove(selectedEdit!.name),
-            localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1, updated: Date.now()}),
-        ]);
+        if (isNameChange) {
+            _actionLog.push(...[
+                {uniqueId: selectedEdit!.name, action: Action.delete, updated: Date.now()},
+                {uniqueId: editData.name, action: Action.update, updated: Date.now()},
+            ]);
+            promiseList.push(localStorage.set(editData.name, {list: byNameList, sum: byNameSum, updated: Date.now()}),);
+        }
+
+        promiseList.push(localStorage.setActionLog({list: _actionLog}));
 
         await Promise.all(promiseList);
         setIsEditPopUpOpen(false);
@@ -230,33 +256,37 @@ const MainPage = () => {
     };
 
 	const onClear = async (editData: IEditData) => {
+        const actionLog = await localStorage.getActionLog();
+        let _actionLog = [...actionLog.list];
+
         let promiseList: Promise<void>[] = [];
 
 		let byName = (await localStorage.get(editData.name)) as ISumData;
 		byName.list = byName.list.filter(x => x !== editData.uniqueId);
 		byName.sum = subtractNumber([byName.sum, Number(editData.value)]);
 		if (byName.list.length <= 1) {
-			promiseList.push(localStorage.remove(editData.name));
+			_actionLog.push({uniqueId: editData.name, action: Action.delete, updated: Date.now()});
+            promiseList.push(localStorage.remove(editData.name));
 		} else {
-			promiseList.push(localStorage.set(editData.name, byName));
+			_actionLog.push({uniqueId: editData.name, action: Action.update, updated: Date.now()});
+            promiseList.push(localStorage.set(editData.name, byName));
 		}
 
 		let byDay = (await localStorage.get(key)) as ISumData;
 		byDay.list = byDay.list.filter(x => x !== editData.uniqueId);
 		byDay.sum = subtractNumber([byDay.sum, Number(editData.value)]);
 		if (byDay.list.length <= 1) {
-			promiseList.push(localStorage.remove(key));
+			_actionLog.push({uniqueId: key, action: Action.delete, updated: Date.now()});
+            promiseList.push(localStorage.remove(key));
 		} else {
-			promiseList.push(localStorage.set(key, byDay));
+			_actionLog.push({uniqueId: key, action: Action.update, updated: Date.now()});
+            promiseList.push(localStorage.set(key, byDay));
 		}
 
-		const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
-		let _deleteList = [...deletedList.list, editData.uniqueId];
-		if (byName.list.length <= 1) { _deleteList = [..._deleteList, editData.name]; }
-		if (byDay.list.length <= 1) { _deleteList = [..._deleteList, key]; }
-		promiseList.push(...[
+		_actionLog.push({uniqueId: editData.uniqueId, action: Action.delete, updated: Date.now()});
+        promiseList.push(...[
             localStorage.remove(editData.uniqueId),
-            localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1, updated: Date.now()}),
+            localStorage.setActionLog({list: _actionLog}),
         ]);
 
 		await Promise.all(promiseList);

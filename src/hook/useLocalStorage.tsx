@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { KeyValuePair } from '@react-native-async-storage/async-storage/lib/typescript/types';
 import { useEffect, useState } from 'react';
 import { LocalStorageKey } from '../enum/CollectionEnum';
-import { IHistoryData, ISumData } from '../interface/DataInterface';
+import { IActionLog, IHistoryData, ISumData } from '../interface/DataInterface';
 import { isSumByNameData } from '../util/ValidationUtil';
 
 const useLocalStorage = () => {
@@ -35,6 +35,28 @@ const useLocalStorage = () => {
 		}
     };
 
+    const setActionLog = async (payload: IActionLog) => {
+        try {
+            if (Object.keys(payload).length > 0) {
+                await AsyncStorage.setItem(LocalStorageKey.actionLog, JSON.stringify(payload));
+            }
+		} catch (e: any) {
+			setMessage(e.message);
+		}
+    };
+
+    const getActionLog = async () => {
+        let json: IActionLog = { list: [] };
+        try {
+			const result = await AsyncStorage.getItem(LocalStorageKey.actionLog);
+            if (result) { json = JSON.parse(result); }
+            return json;
+		} catch (e: any) {
+			setMessage(e.message);
+            return json;
+		}
+    };
+
     const getRange = async (keys: string[] = []) => {
         let json: {[key: string]: IHistoryData | ISumData} = {};
         try {
@@ -53,7 +75,7 @@ const useLocalStorage = () => {
     const getAllNameKeys = async () => {
         try {
             const _keys = await AsyncStorage.getAllKeys();
-            return [...new Set(_keys.filter(x => isSumByNameData(x) && x !== LocalStorageKey.deleteRecord))];
+            return [...new Set(_keys.filter(x => isSumByNameData(x) && x !== LocalStorageKey.actionLog))];
         } catch (e: any) {
             setMessage(e.message);
             return [];
@@ -79,6 +101,7 @@ const useLocalStorage = () => {
     return {
         set: set,
         get: get,
+        setActionLog, getActionLog,
         getRange: getRange,
         remove: remove,
         clear: clear,

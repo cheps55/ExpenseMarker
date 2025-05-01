@@ -1,13 +1,14 @@
 import { useNetInfoInstance } from '@react-native-community/netinfo';
 import React, { useState } from 'react';
 import { Button, ScrollView, StyleSheet, View } from 'react-native';
-import { CloudCollection, LocalStorageKey } from '../../enum/CollectionEnum';
+import { Action } from '../../enum/ActionEnum';
+import { CloudCollection } from '../../enum/CollectionEnum';
 import useFirebase from '../../hook/useFirebase';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
-import { ISumData } from '../../interface/DataInterface';
-import { isDeletedList, isHistoryData, isSumByDayData, isSumByNameData } from '../../util/ValidationUtil';
+import { isHistoryData, isSumByDayData, isSumByNameData } from '../../util/ValidationUtil';
 import ConfirmPopUp from '../PopUp/ConfirmPopUp';
+import ActionLogPage from './ActionLogPage';
 
 const SyncType = Object.freeze({
     from: 'from',
@@ -23,6 +24,7 @@ const SettingPage = () => {
 
     const [syncType, setSyncType] = useState('');
     const [isConfirmPopUpOpen, setIsConfirmPopUpOpen] = useState(false);
+    const [isShowActionLog, setIsShowActionLog] = useState(false);
 
     const onSync = async () => {
         if (syncType === SyncType.from) {
@@ -43,31 +45,36 @@ const SettingPage = () => {
         }
 
         if (syncType === SyncType.to) {
-            const all = await localStorage.getRange();
-            const history = Object.keys(all).filter(key => !isDeletedList(key) && isHistoryData(key));
-            const byName = Object.keys(all).filter(key => !isDeletedList(key) && isSumByNameData(key));
-            const byDay = Object.keys(all).filter(key => !isDeletedList(key) && isSumByDayData(key));
-            const deleted = Object.keys(all).filter(key => isDeletedList(key));
-            if (all) {
+            const actionLog = await localStorage.getActionLog();
+            if (actionLog) {
+                const history = actionLog.list.filter(key => key.action === Action.update && isHistoryData(key.uniqueId));
+                const byName = actionLog.list.filter(key => key.action === Action.update && isSumByNameData(key.uniqueId));
+                const byDay = actionLog.list.filter(key => key.action === Action.update && isSumByDayData(key.uniqueId));
+                const deleted = actionLog.list.filter(key => key.action === Action.delete);
+
                 if (deleted.length > 0) {
-                    for (const key of (all[LocalStorageKey.deleteRecord] as ISumData).list) {
+                    for (const key of deleted) {
                         let collection: string = CloudCollection.History;
-                        if (isSumByNameData(key)) { collection = CloudCollection.SumByName; }
-                        if (isSumByDayData(key)) { collection = CloudCollection.SumByDay; }
-                        await cloudStorage.remove(collection, key);
+                        if (isSumByNameData(key.uniqueId)) { collection = CloudCollection.SumByName; }
+                        if (isSumByDayData(key.uniqueId)) { collection = CloudCollection.SumByDay; }
+                        await cloudStorage.remove(collection, key.uniqueId);
                     }
-                    await localStorage.set(LocalStorageKey.deleteRecord, { list: [], sum: -1, updated: Date.now() });
                 }
 
                 for (const key of history) {
-                    await cloudStorage.set(CloudCollection.History, key, all[key]);
+                    const data = await localStorage.get(key.uniqueId);
+                    await cloudStorage.set(CloudCollection.History, key.uniqueId, data);
                 }
                 for (const key of byName) {
-                    await cloudStorage.set(CloudCollection.SumByName, key, all[key]);
+                    const data = await localStorage.get(key.uniqueId);
+                    await cloudStorage.set(CloudCollection.SumByName, key.uniqueId, data);
                 }
                 for (const key of byDay) {
-                    await cloudStorage.set(CloudCollection.SumByDay, key, all[key]);
+                    const data = await localStorage.get(key.uniqueId);
+                    await cloudStorage.set(CloudCollection.SumByDay, key.uniqueId, data);
                 }
+
+                await localStorage.setActionLog({list: []});
             }
         }
 
@@ -83,29 +90,38 @@ const SettingPage = () => {
     };
 
 	return <ScrollView contentInsetAdjustmentBehavior="automatic">
-        <View style={styles.container}>
-            <Button
-                title={`${language.get('delete_local_data')}`}
-                color="red"
-                onPress={() => { onDeleteAllLocal(); }}
-            />
-            <Button
-                title={`${language.get('back_up')}`}
-                color="blue"
-                onPress={() => { onBackUp(); }}
-            />
-            <Button
-                title={`${language.get('sync.from')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
-                onPress={() => { setSyncType(SyncType.from); setIsConfirmPopUpOpen(true); }}
-                disabled={!isConnected}
-            />
-            <Button
-                title={`${language.get('sync.to')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
-                color="green"
-                onPress={() => { setSyncType(SyncType.to); setIsConfirmPopUpOpen(true); }}
-                disabled={!isConnected}
-            />
-        </View>
+        {
+            isShowActionLog
+            ? <ActionLogPage onBack={() => { setIsShowActionLog(false); }} />
+            : <View style={styles.container}>
+                <Button
+                    title={`${language.get('delete_local_data')}`}
+                    color="red"
+                    onPress={() => { onDeleteAllLocal(); }}
+                />
+                <Button
+                    title={`${language.get('back_up')}`}
+                    color="blue"
+                    onPress={() => { onBackUp(); }}
+                />
+                <Button
+                    title={`${language.get('sync.from')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
+                    onPress={() => { setSyncType(SyncType.from); setIsConfirmPopUpOpen(true); }}
+                    disabled={!isConnected}
+                />
+                <Button
+                    title={`${language.get('sync.to')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
+                    color="green"
+                    onPress={() => { setSyncType(SyncType.to); setIsConfirmPopUpOpen(true); }}
+                    disabled={!isConnected}
+                />
+                <Button
+                    title={`${language.get('action_log')}`}
+                    color="purple"
+                    onPress={() => { setIsShowActionLog(true); }}
+                />
+            </View>
+        }
         {isConfirmPopUpOpen && <ConfirmPopUp
             title={language.get('confirm') + language.get(`sync.${syncType}`)}
             onConfirm={onSync} onClose={() => {setSyncType(''); setIsConfirmPopUpOpen(false);}}

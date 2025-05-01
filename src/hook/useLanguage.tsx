@@ -36,6 +36,18 @@ const Lang: ILanguage = Object.freeze({
         'en': 'Sync to cloud ↑',
         'zh': '同步至雲端 ↑',
     },
+    'action_log': {
+        'en': 'Action log',
+        'zh': '同步記錄',
+    },
+    'go_back': {
+        'en': 'Go back',
+        'zh': '返回',
+    },
+    'clear_action_log': {
+        'en': 'Clear action log',
+        'zh': '清除同步記錄',
+    },
     'date': {
         'en': 'Date',
         'zh': '日期',

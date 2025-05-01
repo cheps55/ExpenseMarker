@@ -1,4 +1,5 @@
 import { GroupType } from '../enum/InputEnum';
+import { Action } from './../enum/ActionEnum';
 
 export interface IInputData {
     timestamp: number,
@@ -35,5 +36,15 @@ export interface IHistoryData {
 export interface ISumData {
     list: string[],
     sum: number,
+    updated: number;
+}
+
+export interface IActionLog {
+    list: IActionItem[];
+}
+
+export interface IActionItem {
+    uniqueId: string;
+    action: keyof typeof Action;
     updated: number;
 }
