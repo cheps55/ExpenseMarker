@@ -97,11 +97,12 @@ const MainPage = () => {
             updated: Date.now(),
 		};
 
-		const newDay = { list: [...byDay.list, item.uniqueId], sum: addNumber([byDay.sum, value]) };
+		const newDay = { list: [...byDay.list, item.uniqueId], sum: addNumber([byDay.sum, value]), updated: Date.now() };
+        const newName = {list: [...(byName.list), item.uniqueId], sum: addNumber([byName.sum, value]), updated: Date.now()};
 
 		await Promise.all([
 			localStorage.set(key, newDay),
-			localStorage.set(item.name, {list: [...(byName.list), item.uniqueId], sum: addNumber([byName.sum, value])}),
+			localStorage.set(item.name, newName),
 			localStorage.set(item.uniqueId, item),
 		]);
 
@@ -143,7 +144,7 @@ const MainPage = () => {
                 const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
                 const _deleteList = [...deletedList.list, oldData.name];
                 promiseList.push(...[
-                    localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1}),
+                    localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1, updated: Date.now()}),
                     localStorage.remove(oldData.name),
                 ]);
 
@@ -208,7 +209,7 @@ const MainPage = () => {
 		if (byDay.list.length <= 1) { _deleteList = [..._deleteList, key]; }
 		promiseList.push(...[
             localStorage.remove(editData.uniqueId),
-            localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1}),
+            localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1, updated: Date.now()}),
         ]);
 
 		await Promise.all(promiseList);

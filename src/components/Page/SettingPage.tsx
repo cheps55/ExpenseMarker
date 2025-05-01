@@ -56,7 +56,7 @@ const SettingPage = () => {
                         if (isSumByDayData(key)) { collection = CloudCollection.SumByDay; }
                         await cloudStorage.remove(collection, key);
                     }
-                    await localStorage.set(LocalStorageKey.deleteRecord, { list: [], sum: -1 });
+                    await localStorage.set(LocalStorageKey.deleteRecord, { list: [], sum: -1, updated: Date.now() });
                 }
 
                 for (const key of history) {
@@ -78,12 +78,21 @@ const SettingPage = () => {
         await localStorage.clear();
     };
 
+    const onBackUp = async () => {
+        await cloudStorage.cloneHistoryRecord();
+    };
+
 	return <ScrollView contentInsetAdjustmentBehavior="automatic">
         <View style={styles.container}>
             <Button
                 title={`${language.get('delete_local_data')}`}
                 color="red"
                 onPress={() => { onDeleteAllLocal(); }}
+            />
+            <Button
+                title={`${language.get('back_up')}`}
+                color="blue"
+                onPress={() => { onBackUp(); }}
             />
             <Button
                 title={`${language.get('sync.from')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}

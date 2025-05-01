@@ -29,9 +29,11 @@ export interface IHistoryData {
     value: number,
     group: keyof typeof GroupType | '',
     tag: string[],
+    updated: number,
 }
 
 export interface ISumData {
     list: string[],
     sum: number,
+    updated: number;
 }

@@ -24,6 +24,10 @@ const Lang: ILanguage = Object.freeze({
         'en': 'Delete local data',
         'zh': '刪除本地資料',
     },
+    'back_up': {
+        'en': 'Back up',
+        'zh': '備份',
+    },
     'sync.from': {
         'en': 'Sync from cloud ↓',
         'zh': '同步自雲端 ↓',

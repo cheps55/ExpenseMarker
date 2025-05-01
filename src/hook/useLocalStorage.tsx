@@ -24,7 +24,7 @@ const useLocalStorage = () => {
     };
 
     const get = async (key: string) => {
-        let json: IHistoryData | ISumData = { list: [], sum: 0 };
+        let json: IHistoryData | ISumData = { list: [], sum: 0, updated: Date.now() };
         try {
 			const result = await AsyncStorage.getItem(key);
             if (result) { json = JSON.parse(result); }

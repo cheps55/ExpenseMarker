@@ -23,7 +23,7 @@ const useFirebase = () => {
     };
 
     const get = async (collectionName: string, key: string) => {
-        let json: IHistoryData | ISumData = { list: [], sum: 0 };
+        let json: IHistoryData | ISumData = { list: [], sum: 0, updated: Date.now() };
         try {
             const q = query(collection(db, collectionName), where(DocumentId, '==', key));
             const result = await getDocs(q);
@@ -63,11 +63,12 @@ const useFirebase = () => {
         }
     };
 
-    const logAllRecord = async () => {
-        for (const collectionName of Object.values(CloudCollection)) {
-            const result = await getRange(collectionName);
-            console.log(JSON.stringify(result));
-        }
+    const cloneHistoryRecord = async () => {
+        const result = await getRange(CloudCollection.History);
+        Object.keys(result).forEach((key) => {
+            const item = result[key];
+            set(CloudCollection.BackUp, key, item);
+        });
     };
 
     return {
@@ -75,7 +76,7 @@ const useFirebase = () => {
         get: get,
         getRange: getRange,
         remove: remove,
-        logAllRecord: logAllRecord,
+        cloneHistoryRecord: cloneHistoryRecord,
         message: message,
     };
 };

@@ -60,6 +60,7 @@ const SearchPage = () => {
             const key: string = byNameList[i];
             let item = _list[key];
             item.name = renameText;
+            item.updated = Date.now();
             byNameSum = addNumber([byNameSum, item.value]);
             promiseList.push(localStorage.set(key, item));
         }
@@ -67,9 +68,9 @@ const SearchPage = () => {
         const deletedList = (await localStorage.get(LocalStorageKey.deleteRecord)) as ISumData;
         const _deleteList = [...deletedList.list, text];
         promiseList.push(...[
-            localStorage.set(renameText, {list: byNameList, sum: byNameSum}),
+            localStorage.set(renameText, {list: byNameList, sum: byNameSum, updated: Date.now()}),
             localStorage.remove(text),
-            localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1}),
+            localStorage.set(LocalStorageKey.deleteRecord, {list: _deleteList, sum: -1, updated: Date.now()}),
         ]);
 
         await Promise.all(promiseList);
