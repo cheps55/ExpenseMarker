@@ -26,7 +26,7 @@ const MainPage = () => {
 	const [hasUpdate, setHasUpdate] = useState(false);
 	const [selectedEdit, setSelectedEdit] = useState<IEditData>();
 	const [isEditPopUpOpen, setIsEditPopUpOpen] = useState(false);
-	const [nameList, setNameLust] = useState<string[]>([]);
+	const [suggestionList, setSuggestionList] = useState<string[]>([]);
 
 	const monthSum = useMemo(() => {
 		let sum = 0;
@@ -45,7 +45,7 @@ const MainPage = () => {
 	}, []);
 
 	const initRecordList = async (_year: string, _month: string, _day: string) => {
-		setNameLust(await localStorage.getAllNameKeys());
+		setSuggestionList(await localStorage.getAllNameKeys());
 		let keys: string[] = [];
 		for (const d of getDayInMonth(Number(_year), Number(_month))) { keys.push(`${_year}-${_month}-${d}`); }
 		const byDay = await localStorage.getRange(keys);
@@ -347,7 +347,7 @@ const MainPage = () => {
                 hideExtraDays
 				enableSwipeMonths
             />
-            <InputForm state={inputData} setState={setInputData} suggestionList={nameList} />
+            <InputForm state={inputData} setState={setInputData} suggestionList={suggestionList} />
             <Button
                 title={language.get('confirm')}
                 onPress={() => onAdd({...inputData, ...date})}

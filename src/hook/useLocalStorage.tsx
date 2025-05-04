@@ -97,7 +97,7 @@ const useLocalStorage = () => {
     const getAllNameKeys = async () => {
         try {
             const _keys = await AsyncStorage.getAllKeys();
-            return [...new Set(_keys.filter(x => isSumByNameData(x) && x !== LocalStorageKey.actionLog))];
+            return [...new Set(_keys.filter(x => isSumByNameData(x) && !Object.values(LocalStorageKey).some(y => y === x)))];
         } catch (e: any) {
             setMessage(e.message);
             return [];
