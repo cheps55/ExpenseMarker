@@ -1,11 +1,13 @@
 import { useNetInfoInstance } from '@react-native-community/netinfo';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, ScrollView, StyleSheet, View } from 'react-native';
 import { Action } from '../../enum/ActionEnum';
 import { CloudCollection } from '../../enum/CollectionEnum';
 import useFirebase from '../../hook/useFirebase';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
+import { ILastSync } from '../../interface/DataInterface';
+import { getFormatDate } from '../../util/DateTimeUtil';
 import { isHistoryData, isSumByDayData, isSumByNameData } from '../../util/ValidationUtil';
 import ConfirmPopUp from '../PopUp/ConfirmPopUp';
 import ActionLogPage from './ActionLogPage';
@@ -22,26 +24,42 @@ const SettingPage = () => {
 
 	const { netInfo: { isConnected } } = useNetInfoInstance();
 
+    const [lastSync, setLastSync] = useState<ILastSync>({to: 0, from: 0});
+    const { from, to } = lastSync;
     const [syncType, setSyncType] = useState('');
     const [isConfirmPopUpOpen, setIsConfirmPopUpOpen] = useState(false);
     const [isShowActionLog, setIsShowActionLog] = useState(false);
 
+    useEffect(() => {
+        initData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const initData = async () => {
+        const data = await localStorage.getLastSync();
+        setLastSync(data);
+    };
+
     const onSync = async () => {
+        let newSyncTime: ILastSync = {to: 0, from: 0};
+        let promiseList: Promise<void>[] = [];
+
         if (syncType === SyncType.from) {
             const history = await cloudStorage.getRange(CloudCollection.History);
             const byName = await cloudStorage.getRange(CloudCollection.SumByName);
             const byDay = await cloudStorage.getRange(CloudCollection.SumByDay);
             if (history || byName || byDay) {
                 for (const key of Object.keys(history)) {
-                    await localStorage.set(key, history[key]);
+                    promiseList.push(localStorage.set(key, history[key]));
                 }
                 for (const key of Object.keys(byName)) {
-                    await localStorage.set(key, byName[key]);
+                    promiseList.push(localStorage.set(key, byName[key]));
                 }
                 for (const key of Object.keys(byDay)) {
-                    await localStorage.set(key, byDay[key]);
+                    promiseList.push(localStorage.set(key, byDay[key]));
                 }
             }
+            newSyncTime = {from: Date.now(), to};
         }
 
         if (syncType === SyncType.to) {
@@ -57,27 +75,32 @@ const SettingPage = () => {
                         let collection: string = CloudCollection.History;
                         if (isSumByNameData(key.uniqueId)) { collection = CloudCollection.SumByName; }
                         if (isSumByDayData(key.uniqueId)) { collection = CloudCollection.SumByDay; }
-                        await cloudStorage.remove(collection, key.uniqueId);
+                        promiseList.push(cloudStorage.remove(collection, key.uniqueId));
                     }
                 }
 
                 for (const key of history) {
                     const data = await localStorage.get(key.uniqueId);
-                    await cloudStorage.set(CloudCollection.History, key.uniqueId, data);
+                    promiseList.push(cloudStorage.set(CloudCollection.History, key.uniqueId, data));
                 }
                 for (const key of byName) {
                     const data = await localStorage.get(key.uniqueId);
-                    await cloudStorage.set(CloudCollection.SumByName, key.uniqueId, data);
+                    promiseList.push(cloudStorage.set(CloudCollection.SumByName, key.uniqueId, data));
                 }
                 for (const key of byDay) {
                     const data = await localStorage.get(key.uniqueId);
-                    await cloudStorage.set(CloudCollection.SumByDay, key.uniqueId, data);
+                    promiseList.push(cloudStorage.set(CloudCollection.SumByDay, key.uniqueId, data));
                 }
 
-                await localStorage.setActionLog({list: []});
+                promiseList.push(localStorage.setActionLog({list: []}));
+                newSyncTime = {from, to: Date.now()};
             }
         }
 
+        promiseList.push(localStorage.setLastSync(newSyncTime));
+        await Promise.all(promiseList);
+
+        setLastSync(newSyncTime);
         setIsConfirmPopUpOpen(false);
     };
 
@@ -87,6 +110,11 @@ const SettingPage = () => {
 
     const onBackUp = async () => {
         await cloudStorage.cloneHistoryRecord();
+    };
+
+    const getSyncButtonTitle = (type: keyof typeof SyncType) => {
+        const timestamp = type === SyncType.from ? from : to;
+        return `${language.get(`sync.${type}`)}${timestamp > 0 ? `(${language.get('sync.last_sync')}: ${getFormatDate(timestamp)})` : ''}${isConnected ? '' : ` ${language.get('no_internet')}`}`;
     };
 
 	return <ScrollView contentInsetAdjustmentBehavior="automatic">
@@ -105,12 +133,12 @@ const SettingPage = () => {
                     onPress={() => { onBackUp(); }}
                 />
                 <Button
-                    title={`${language.get('sync.from')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
+                    title={getSyncButtonTitle(SyncType.from)}
                     onPress={() => { setSyncType(SyncType.from); setIsConfirmPopUpOpen(true); }}
                     disabled={!isConnected}
                 />
                 <Button
-                    title={`${language.get('sync.to')}${isConnected ? '' : ` ${language.get('no_internet')}`}`}
+                    title={getSyncButtonTitle(SyncType.to)}
                     color="green"
                     onPress={() => { setSyncType(SyncType.to); setIsConfirmPopUpOpen(true); }}
                     disabled={!isConnected}

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { KeyValuePair } from '@react-native-async-storage/async-storage/lib/typescript/types';
 import { useEffect, useState } from 'react';
 import { LocalStorageKey } from '../enum/CollectionEnum';
-import { IActionLog, IHistoryData, ISumData } from '../interface/DataInterface';
+import { IActionLog, IHistoryData, ILastSync, ISumData } from '../interface/DataInterface';
 import { isSumByNameData } from '../util/ValidationUtil';
 
 const useLocalStorage = () => {
@@ -57,6 +57,28 @@ const useLocalStorage = () => {
 		}
     };
 
+    const setLastSync = async (payload: ILastSync) => {
+        try {
+            if (Object.keys(payload).length > 0) {
+                await AsyncStorage.setItem(LocalStorageKey.lastSync, JSON.stringify(payload));
+            }
+		} catch (e: any) {
+			setMessage(e.message);
+		}
+    };
+
+    const getLastSync = async () => {
+        let json: ILastSync = { from: 0, to: 0 };
+        try {
+			const result = await AsyncStorage.getItem(LocalStorageKey.lastSync);
+            if (result) { json = JSON.parse(result); }
+            return json;
+		} catch (e: any) {
+			setMessage(e.message);
+            return json;
+		}
+    };
+
     const getRange = async (keys: string[] = []) => {
         let json: {[key: string]: IHistoryData | ISumData} = {};
         try {
@@ -102,6 +124,7 @@ const useLocalStorage = () => {
         set: set,
         get: get,
         setActionLog, getActionLog,
+        setLastSync, getLastSync,
         getRange: getRange,
         remove: remove,
         clear: clear,

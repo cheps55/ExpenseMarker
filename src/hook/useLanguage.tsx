@@ -29,12 +29,16 @@ const Lang: ILanguage = Object.freeze({
         'zh': '備份',
     },
     'sync.from': {
-        'en': 'Sync from cloud ↓',
-        'zh': '同步自雲端 ↓',
+        'en': 'Sync from cloud',
+        'zh': '同步自雲端',
     },
     'sync.to': {
-        'en': 'Sync to cloud ↑',
-        'zh': '同步至雲端 ↑',
+        'en': 'Sync to cloud',
+        'zh': '同步至雲端',
+    },
+    'sync.last_sync': {
+        'en': 'Last Sync',
+        'zh': '最後同步',
     },
     'action_log': {
         'en': 'Action log',

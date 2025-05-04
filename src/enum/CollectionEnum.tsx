@@ -7,4 +7,5 @@ export const CloudCollection = Object.freeze({
 
 export const LocalStorageKey = Object.freeze({
     actionLog: 'actionLog',
+    lastSync: 'lastSync',
 });

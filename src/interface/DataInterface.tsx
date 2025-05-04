@@ -43,6 +43,11 @@ export interface IActionLog {
     list: IActionItem[];
 }
 
+export interface ILastSync {
+    from: number;
+    to: number;
+}
+
 export interface IActionItem {
     uniqueId: string;
     action: keyof typeof Action;
