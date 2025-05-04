@@ -328,7 +328,10 @@ const MainPage = () => {
                 }}
 				renderHeader={(header: string) => {
 					return <View>
-						<Text>{new Date(header).toLocaleDateString('en-GB', {year: 'numeric', month: 'long'})}</Text>
+						<View style={styles.calendarHeader}>
+                            <Text>{new Date(header).toLocaleDateString('en-GB', {month: 'long'})}</Text>
+                            <Text>{new Date(header).toLocaleDateString('en-GB', {year: 'numeric'})}</Text>
+                        </View>
 						<Text style={styles.redText}>{monthSum}</Text>
 					</View>;
 				}}
@@ -389,6 +392,7 @@ const MainPage = () => {
 
 const styles = StyleSheet.create({
 	dayContainer: { width: '100%' },
+    calendarHeader: {display: 'flex', flexDirection: 'row', gap: 16},
 	day: {textAlign: 'center'},
 	selectedDay: {color: 'purple', backgroundColor: 'lightblue'},
 	header: {textAlign: 'center'},
