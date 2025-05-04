@@ -1,7 +1,7 @@
 import { useNetInfoInstance } from '@react-native-community/netinfo';
 import React, { useEffect, useState } from 'react';
 import { Button, ScrollView, StyleSheet, View } from 'react-native';
-import { Action } from '../../enum/ActionEnum';
+import { Action, SettingType } from '../../enum/ActionEnum';
 import { CloudCollection } from '../../enum/CollectionEnum';
 import useFirebase from '../../hook/useFirebase';
 import useLanguage from '../../hook/useLanguage';
@@ -12,11 +12,6 @@ import { isHistoryData, isSumByDayData, isSumByNameData } from '../../util/Valid
 import ConfirmPopUp from '../PopUp/ConfirmPopUp';
 import ActionLogPage from './ActionLogPage';
 
-const SyncType = Object.freeze({
-    from: 'from',
-    to: 'to',
-})
-
 const SettingPage = () => {
 	const localStorage = useLocalStorage();
 	const cloudStorage = useFirebase();
@@ -26,7 +21,7 @@ const SettingPage = () => {
 
     const [lastSync, setLastSync] = useState<ILastSync>({to: 0, from: 0});
     const { from, to } = lastSync;
-    const [syncType, setSyncType] = useState('');
+    const [actionType, setSettingType] = useState('');
     const [isConfirmPopUpOpen, setIsConfirmPopUpOpen] = useState(false);
     const [isShowActionLog, setIsShowActionLog] = useState(false);
 
@@ -40,81 +35,87 @@ const SettingPage = () => {
         setLastSync(data);
     };
 
-    const onSync = async () => {
+    const onConfirm = async () => {
         let newSyncTime: ILastSync = {to: 0, from: 0};
         let promiseList: Promise<void>[] = [];
 
-        if (syncType === SyncType.from) {
-            const history = await cloudStorage.getRange(CloudCollection.History);
-            const byName = await cloudStorage.getRange(CloudCollection.SumByName);
-            const byDay = await cloudStorage.getRange(CloudCollection.SumByDay);
-            if (history || byName || byDay) {
-                for (const key of Object.keys(history)) {
-                    promiseList.push(localStorage.set(key, history[key]));
-                }
-                for (const key of Object.keys(byName)) {
-                    promiseList.push(localStorage.set(key, byName[key]));
-                }
-                for (const key of Object.keys(byDay)) {
-                    promiseList.push(localStorage.set(key, byDay[key]));
-                }
-            }
-            newSyncTime = {from: Date.now(), to};
-        }
-
-        if (syncType === SyncType.to) {
-            const actionLog = await localStorage.getActionLog();
-            if (actionLog) {
-                const history = actionLog.list.filter(key => key.action === Action.update && isHistoryData(key.uniqueId));
-                const byName = actionLog.list.filter(key => key.action === Action.update && isSumByNameData(key.uniqueId));
-                const byDay = actionLog.list.filter(key => key.action === Action.update && isSumByDayData(key.uniqueId));
-                const deleted = actionLog.list.filter(key => key.action === Action.delete);
-
-                if (deleted.length > 0) {
-                    for (const key of deleted) {
-                        let collection: string = CloudCollection.History;
-                        if (isSumByNameData(key.uniqueId)) { collection = CloudCollection.SumByName; }
-                        if (isSumByDayData(key.uniqueId)) { collection = CloudCollection.SumByDay; }
-                        promiseList.push(cloudStorage.remove(collection, key.uniqueId));
+        switch(actionType) {
+            case SettingType.deleteLocal:
+                promiseList.push(localStorage.clear());
+                break;
+            case SettingType.backUp:
+                promiseList.push(cloudStorage.cloneHistoryRecord());
+                break;
+            case SettingType.syncFrom:
+                const commonGetProps = {timestamp: from};
+                const history = await cloudStorage.getRange({collectionName: CloudCollection.History, ...commonGetProps});
+                const byName = await cloudStorage.getRange({collectionName: CloudCollection.SumByName, ...commonGetProps});
+                const byDay = await cloudStorage.getRange({collectionName: CloudCollection.SumByDay, ...commonGetProps});
+                if (history || byName || byDay) {
+                    for (const key of Object.keys(history)) {
+                        promiseList.push(localStorage.set(key, history[key]));
+                    }
+                    for (const key of Object.keys(byName)) {
+                        promiseList.push(localStorage.set(key, byName[key]));
+                    }
+                    for (const key of Object.keys(byDay)) {
+                        promiseList.push(localStorage.set(key, byDay[key]));
                     }
                 }
+                newSyncTime = {from: Date.now(), to};
+                promiseList.push(localStorage.setLastSync(newSyncTime));
+                break;
+            case SettingType.syncTo:
+                const actionLog = await localStorage.getActionLog();
+                if (actionLog) {
+                    const _history = actionLog.list.filter(key => key.action === Action.update && isHistoryData(key.uniqueId));
+                    const _byName = actionLog.list.filter(key => key.action === Action.update && isSumByNameData(key.uniqueId));
+                    const _byDay = actionLog.list.filter(key => key.action === Action.update && isSumByDayData(key.uniqueId));
+                    const deleted = actionLog.list.filter(key => key.action === Action.delete);
 
-                for (const key of history) {
-                    const data = await localStorage.get(key.uniqueId);
-                    promiseList.push(cloudStorage.set(CloudCollection.History, key.uniqueId, data));
-                }
-                for (const key of byName) {
-                    const data = await localStorage.get(key.uniqueId);
-                    promiseList.push(cloudStorage.set(CloudCollection.SumByName, key.uniqueId, data));
-                }
-                for (const key of byDay) {
-                    const data = await localStorage.get(key.uniqueId);
-                    promiseList.push(cloudStorage.set(CloudCollection.SumByDay, key.uniqueId, data));
-                }
+                    if (deleted.length > 0) {
+                        for (const key of deleted) {
+                            let collection: string = CloudCollection.History;
+                            if (isSumByNameData(key.uniqueId)) { collection = CloudCollection.SumByName; }
+                            if (isSumByDayData(key.uniqueId)) { collection = CloudCollection.SumByDay; }
+                            promiseList.push(cloudStorage.remove(collection, key.uniqueId));
+                        }
+                    }
 
-                promiseList.push(localStorage.setActionLog({list: []}));
+                    for (const key of _history) {
+                        const data = await localStorage.get(key.uniqueId);
+                        promiseList.push(cloudStorage.set(CloudCollection.History, key.uniqueId, data));
+                    }
+                    for (const key of _byName) {
+                        const data = await localStorage.get(key.uniqueId);
+                        promiseList.push(cloudStorage.set(CloudCollection.SumByName, key.uniqueId, data));
+                    }
+                    for (const key of _byDay) {
+                        const data = await localStorage.get(key.uniqueId);
+                        promiseList.push(cloudStorage.set(CloudCollection.SumByDay, key.uniqueId, data));
+                    }
+
+                    promiseList.push(localStorage.setActionLog({list: []}));
+                }
                 newSyncTime = {from, to: Date.now()};
-            }
+                promiseList.push(localStorage.setLastSync(newSyncTime));
+                break;
+            default:
+                break;
         }
 
-        promiseList.push(localStorage.setLastSync(newSyncTime));
         await Promise.all(promiseList);
-
-        setLastSync(newSyncTime);
+        if ([SettingType.syncFrom, SettingType.syncTo].some(x => x === actionType)) {
+            setLastSync(newSyncTime);
+        }
         setIsConfirmPopUpOpen(false);
     };
 
-    const onDeleteAllLocal = async () => {
-        await localStorage.clear();
-    };
-
-    const onBackUp = async () => {
-        await cloudStorage.cloneHistoryRecord();
-    };
-
-    const getSyncButtonTitle = (type: keyof typeof SyncType) => {
-        const timestamp = type === SyncType.from ? from : to;
-        return `${language.get(`sync.${type}`)}${timestamp > 0 ? `(${language.get('sync.last_sync')}: ${getFormatDate(timestamp)})` : ''}${isConnected ? '' : ` ${language.get('no_internet')}`}`;
+    const getButtonTitle = (type: keyof typeof SettingType) => {
+        const timestamp = type === SettingType.syncFrom ? from : to;
+        let str: string = language.get(type);
+        str += `${timestamp > 0 ? `(${language.get('sync.last_sync')}: ${getFormatDate(timestamp)})` : ''}${isConnected ? '' : ` ${language.get('no_internet')}`}`;
+        return str;
     };
 
 	return <ScrollView contentInsetAdjustmentBehavior="automatic">
@@ -123,24 +124,24 @@ const SettingPage = () => {
             ? <ActionLogPage onBack={() => { setIsShowActionLog(false); }} />
             : <View style={styles.container}>
                 <Button
-                    title={`${language.get('delete_local_data')}`}
+                    title={getButtonTitle(SettingType.deleteLocal)}
                     color="red"
-                    onPress={() => { onDeleteAllLocal(); }}
+                    onPress={() => { setSettingType(SettingType.deleteLocal); setIsConfirmPopUpOpen(true); }}
                 />
                 <Button
-                    title={`${language.get('back_up')}`}
+                    title={getButtonTitle(SettingType.backUp)}
                     color="blue"
-                    onPress={() => { onBackUp(); }}
+                    onPress={() => { setSettingType(SettingType.backUp); setIsConfirmPopUpOpen(true); }}
                 />
                 <Button
-                    title={getSyncButtonTitle(SyncType.from)}
-                    onPress={() => { setSyncType(SyncType.from); setIsConfirmPopUpOpen(true); }}
+                    title={getButtonTitle(SettingType.syncFrom)}
+                    onPress={() => { setSettingType(SettingType.syncFrom); setIsConfirmPopUpOpen(true); }}
                     disabled={!isConnected}
                 />
                 <Button
-                    title={getSyncButtonTitle(SyncType.to)}
+                    title={getButtonTitle(SettingType.syncTo)}
                     color="green"
-                    onPress={() => { setSyncType(SyncType.to); setIsConfirmPopUpOpen(true); }}
+                    onPress={() => { setSettingType(SettingType.syncTo); setIsConfirmPopUpOpen(true); }}
                     disabled={!isConnected}
                 />
                 <Button
@@ -151,8 +152,8 @@ const SettingPage = () => {
             </View>
         }
         {isConfirmPopUpOpen && <ConfirmPopUp
-            title={language.get('confirm') + language.get(`sync.${syncType}`)}
-            onConfirm={onSync} onClose={() => {setSyncType(''); setIsConfirmPopUpOpen(false);}}
+            title={language.get('confirm') + language.get(actionType)}
+            onConfirm={onConfirm} onClose={() => {setSettingType(''); setIsConfirmPopUpOpen(false);}}
         />}
     </ScrollView>;
 }

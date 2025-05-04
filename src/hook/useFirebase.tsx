@@ -22,10 +22,14 @@ const useFirebase = () => {
         }
     };
 
-    const get = async (collectionName: string, key: string) => {
+    const get = async ({
+        collectionName, documentId, timestamp = 0,
+    }: {
+        collectionName: string, documentId: string, timestamp?: number
+    }) => {
         let json: IHistoryData | ISumData = { list: [], sum: 0, updated: Date.now() };
         try {
-            const q = query(collection(db, collectionName), where(DocumentId, '==', key));
+            const q = query(collection(db, collectionName), where(DocumentId, '==', documentId), where('updated', '>=', timestamp));
             const result = await getDocs(q);
             if (!result.empty) { json = result.docs[0].data() as any; }
             return json;
@@ -35,14 +39,18 @@ const useFirebase = () => {
         }
     };
 
-    const getRange = async (collectionName: string, keys: string[] = []) => {
+    const getRange = async ({
+        collectionName, documentIds = [], timestamp = 0,
+    }: {
+        collectionName: string, documentIds?: string[], timestamp?: number
+    }) => {
         let json: {[key: string]: IHistoryData | ISumData} = {};
         try {
             let q;
-            if (keys.length > 0) {
-                q = query(collection(db, collectionName), where(DocumentId, 'in', keys));
+            if (documentIds.length > 0) {
+                q = query(collection(db, collectionName), where(DocumentId, 'in', documentIds), where('updated', '>=', timestamp));
             } else {
-                q = collection(db, collectionName);
+                q = query(collection(db, collectionName), where('updated', '>=', timestamp));
             }
             const result = await getDocs(q);
             result.forEach(_doc => {
@@ -64,7 +72,7 @@ const useFirebase = () => {
     };
 
     const cloneHistoryRecord = async () => {
-        const result = await getRange(CloudCollection.History);
+        const result = await getRange({collectionName: CloudCollection.History});
         Object.keys(result).forEach((key) => {
             const item = result[key];
             set(CloudCollection.BackUp, key, item);

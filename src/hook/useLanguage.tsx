@@ -1,3 +1,4 @@
+import { SettingType } from '../enum/ActionEnum';
 
 const useLanguage = (language: 'en' | 'zh' = 'zh') => {
     const get = (key: string) => {
@@ -20,19 +21,19 @@ const Lang: ILanguage = Object.freeze({
         'en': '(No Internet)',
         'zh': '(無網路)',
     },
-    'delete_local_data': {
+    [SettingType.deleteLocal]: {
         'en': 'Delete local data',
         'zh': '刪除本地資料',
     },
-    'back_up': {
+    [SettingType.backUp]: {
         'en': 'Back up',
         'zh': '備份',
     },
-    'sync.from': {
+    [SettingType.syncFrom]: {
         'en': 'Sync from cloud',
         'zh': '同步自雲端',
     },
-    'sync.to': {
+    [SettingType.syncTo]: {
         'en': 'Sync to cloud',
         'zh': '同步至雲端',
     },
