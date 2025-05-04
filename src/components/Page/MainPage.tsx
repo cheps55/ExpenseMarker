@@ -306,7 +306,7 @@ const MainPage = () => {
 		setHasUpdate(prev => !prev);
 	};
 
-	return <ScrollView contentInsetAdjustmentBehavior="automatic">
+	return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
         <View>
             <Calendar
                 onDayPress={(item: IInputDate) => {
