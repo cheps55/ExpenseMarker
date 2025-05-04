@@ -9,6 +9,8 @@ import { IEditData, IHistoryData, IInputData, IInputDate, ISumData } from '../..
 import { getDayInMonth } from '../../util/DateTimeUtil';
 import { addNumber, formatNumber, subtractNumber } from '../../util/NumberUtil';
 import InputForm from '../Form/InputForm';
+import MonthDropdown from '../Input/MonthDropdown';
+import YearDropdown from '../Input/YearDropdown';
 import EditPopUp from '../PopUp/EditPopUp';
 
 const MainPage = () => {
@@ -33,7 +35,7 @@ const MainPage = () => {
 		sum = addNumber([sum, ...Object.keys(listByDay).map(_key => listByDay[_key].sum)]);
 		return sum;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [month, hasUpdate]);
+	}, [hasUpdate]);
 
 	useEffect(() => {
 		const current = new Date();
@@ -69,6 +71,7 @@ const MainPage = () => {
 			await Promise.all(dayPromises);
 			setDate({dateString: `${_year}-${_month}-${_day}`, timestamp: new Date(`${_year}-${_month}-${_day}`).valueOf(), year: _year, month: _month, day: _day});
 		}
+        setHasUpdate(prev => !prev);
 	};
 
 	const isDisableConfirmButton = () => {
@@ -309,6 +312,7 @@ const MainPage = () => {
 	return <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
         <View>
             <Calendar
+                initialDate={dateString}
                 onDayPress={(item: IInputDate) => {
 					const dateData = {
                         dateString: item.dateString,
@@ -320,17 +324,51 @@ const MainPage = () => {
                     setDate(dateData);
                 }}
                 onMonthChange={(item: IInputDate) => {
-                    setListByDay({});
                     const _year = String(item.year);
                     const _month = String(item.month).padStart(2, '0');
                     const _day = String(item.day).padStart(2, '0');
-                    initRecordList(_year, _month, _day);
+                    if (_year !== year || _month !== month || _day !== day) {
+                        setListByDay({});
+                        initRecordList(_year, _month, _day);
+                    }
                 }}
-				renderHeader={(header: string) => {
+				renderHeader={() => {
 					return <View>
 						<View style={styles.calendarHeader}>
-                            <Text>{new Date(header).toLocaleDateString('en-GB', {month: 'long'})}</Text>
-                            <Text>{new Date(header).toLocaleDateString('en-GB', {year: 'numeric'})}</Text>
+                            <MonthDropdown
+                                date={date}
+                                onChange={(item) => {
+                                    let dateData = {
+                                        year: String(year),
+                                        month: String(item.value),
+                                        day: String(day),
+                                        dateString: '',
+                                        timestamp: 0,
+                                    };
+                                    dateData.dateString = `${dateData.year}-${dateData.month}-${dateData.day}`;
+                                    dateData.timestamp = new Date(`${dateData.year}-${dateData.month}-${dateData.day}`).valueOf();
+                                    setDate(dateData);
+                                    setListByDay({});
+                                    initRecordList(dateData.year, dateData.month, dateData.day);
+                                }}
+                            />
+                            <YearDropdown
+                                date={date}
+                                onChange={(item) => {
+                                    let dateData = {
+                                        year: String(item.value),
+                                        month: String(month),
+                                        day: String(day),
+                                        dateString: '',
+                                        timestamp: 0,
+                                    };
+                                    dateData.dateString = `${dateData.year}-${dateData.month}-${dateData.day}`;
+                                    dateData.timestamp = new Date(`${dateData.year}-${dateData.month}-${dateData.day}`).valueOf();
+                                    setDate(dateData);
+                                    setListByDay({});
+                                    initRecordList(dateData.year, dateData.month, dateData.day);
+                                }}
+                            />
                         </View>
 						<Text style={styles.redText}>{monthSum}</Text>
 					</View>;
@@ -393,7 +431,7 @@ const MainPage = () => {
 const styles = StyleSheet.create({
 	dayContainer: { width: '100%' },
     calendarHeader: {display: 'flex', flexDirection: 'row', gap: 16},
-	day: {textAlign: 'center'},
+    day: {textAlign: 'center'},
 	selectedDay: {color: 'purple', backgroundColor: 'lightblue'},
 	header: {textAlign: 'center'},
 	message: {color:'red'},

@@ -71,34 +71,11 @@ const InputForm = ({
 
 const styles = StyleSheet.create({
     dropdown: { paddingLeft: 4 },
-    item: {
-        padding: 4,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    textItem: { flex: 1, fontSize: 16 },
+    item: { padding: 4 },
+    textItem: { fontSize: 16 },
     group_: {},
     group_food: GlobalStyles.dropdown.group_food,
 	group_entertainment: GlobalStyles.dropdown.group_entertainment,
-    nameInput: {
-        position: 'relative',
-    },
-    suggestionsContainer: {
-        position: 'absolute',
-        backgroundColor: 'white',
-        top: 40,
-        zIndex: 1,
-        width: '100%',
-        maxHeight: 150,
-        borderColor: 'gray',
-        borderWidth: 1,
-    },
-    suggestionItem: {
-        padding: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: 'lightgray',
-    },
 });
 
 export default InputForm;
