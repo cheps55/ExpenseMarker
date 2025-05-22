@@ -114,7 +114,7 @@ const SettingPage = () => {
     const getButtonTitle = (type: keyof typeof SettingType) => {
         const timestamp = type === SettingType.syncFrom ? from : to;
         let str: string = language.get(type);
-        str += `${timestamp > 0 ? `(${language.get('sync.last_sync')}: ${getFormatDate(timestamp)})` : ''}${isConnected ? '' : ` ${language.get('no_internet')}`}`;
+        str += `${[SettingType.syncFrom, SettingType.syncTo].some(x => x === type) ? `(${language.get('sync.last_sync')}: ${getFormatDate(timestamp)})` : ''}${isConnected ? '' : ` ${language.get('no_internet')}`}`;
         return str;
     };
 
