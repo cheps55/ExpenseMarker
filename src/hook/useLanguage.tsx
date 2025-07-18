@@ -1,4 +1,5 @@
 import { SettingType } from '../enum/ActionEnum';
+import { GroupType } from '../enum/InputEnum';
 
 const useLanguage = (language: 'en' | 'zh' = 'zh') => {
     const get = (key: string) => {
@@ -69,13 +70,17 @@ const Lang: ILanguage = Object.freeze({
         'en': 'Price',
         'zh': '價格',
     },
-    'dropdown.food': {
+    [`dropdown.${GroupType.food}`]: {
         'en': 'Food',
         'zh': '飲食',
     },
-    'dropdown.entertainment': {
+    [`dropdown.${GroupType.entertainment}`]: {
         'en': 'Entertainment',
         'zh': '娛樂',
+    },
+    [`dropdown.${GroupType.medical}`]: {
+        'en': 'Medical',
+        'zh': '醫療',
     },
     'tag': {
         'en': 'Tag',

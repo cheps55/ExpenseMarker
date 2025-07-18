@@ -27,6 +27,7 @@ const GlobalStyles: {[key:string]: StyleSheet.NamedStyles<any>} = {
     dropdown: {
         group_food: {backgroundColor: 'lightgreen'},
         group_entertainment: {backgroundColor: 'lightblue'},
+        group_medical: {backgroundColor: 'lightcoral'},
     },
 };
 

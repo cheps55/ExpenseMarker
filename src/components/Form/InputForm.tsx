@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
     group_: {},
     group_food: GlobalStyles.dropdown.group_food,
 	group_entertainment: GlobalStyles.dropdown.group_entertainment,
+    group_medical: GlobalStyles.dropdown.group_medical,
 });
 
 export default InputForm;
