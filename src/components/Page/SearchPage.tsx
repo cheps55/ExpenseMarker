@@ -44,7 +44,7 @@ const SearchPage = () => {
     };
 
 	return (
-		<ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
+		<ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" nestedScrollEnabled={true}>
             <View>
                 <SuggestionInput
                     state={text}
