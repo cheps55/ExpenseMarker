@@ -44,7 +44,7 @@ const SearchPage = () => {
     };
 
 	return (
-		<ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" nestedScrollEnabled={true}>
+		<View style={[styles.container]} >
             <View>
                 <SuggestionInput
                     state={text}
@@ -71,11 +71,12 @@ const SearchPage = () => {
                     })
                 }
 			</ScrollView>
-		</ScrollView>
+		</View>
 	);
 };
 
 const styles = StyleSheet.create({
+    container: { flex: 1 },
 	listItem: { padding: 4 },
 });
 
