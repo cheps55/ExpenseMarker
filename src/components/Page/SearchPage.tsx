@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import useLocalStorage from '../../hook/useLocalStorage';
+import useMask from '../../hook/useMask';
 import { IHistoryData, ISumData } from '../../interface/DataInterface';
 import { getFormatDate } from '../../util/DateTimeUtil';
+import { formatNumber } from '../../util/NumberUtil';
 import SuggestionInput, { SuggestionInputType } from '../Input/SuggestionInput';
 
 const SearchPage = () => {
@@ -26,6 +28,12 @@ const SearchPage = () => {
     useEffect(() => {
         setData((prev) => ({...prev, renameText: text}));
     }, [text]);
+
+    const mask = useMask();
+    const maskedFormat = (value: string | number | undefined) => {
+        if (mask.masked) { return '***'; }
+        return formatNumber(value ?? '');
+    };
 
     const init = async () => {
         setNameList(await localStorage.getAllNameKeys());
@@ -58,7 +66,7 @@ const SearchPage = () => {
                         const item = list[key];
                         return <View style={[styles.listItem]} key={key}>
                             <Text>
-                                {getFormatDate(item.timestamp)}: {item.value} :
+                                {getFormatDate(item.timestamp)}: {maskedFormat(item.value)} :
                                 {
                                     item.tag.map((_item, index) => {
                                         return <React.Fragment key={_item + index}>

@@ -5,6 +5,7 @@ import GlobalStyles from '../../css/GlobalCss';
 import { Action } from '../../enum/ActionEnum';
 import useLanguage from '../../hook/useLanguage';
 import useLocalStorage from '../../hook/useLocalStorage';
+import useMask from '../../hook/useMask';
 import { IEditData, IHistoryData, IInputData, IInputDate, ISumData } from '../../interface/DataInterface';
 import { getDayInMonth } from '../../util/DateTimeUtil';
 import { addNumber, formatNumber, subtractNumber } from '../../util/NumberUtil';
@@ -29,6 +30,14 @@ const MainPage = () => {
 	const [selectedEdit, setSelectedEdit] = useState<IEditData>();
 	const [isEditPopUpOpen, setIsEditPopUpOpen] = useState(false);
 	const [suggestionList, setSuggestionList] = useState<string[]>([]);
+
+	const mask = useMask();
+
+	const maskedFormat = (value: string | number | undefined) => {
+        if (typeof value === 'undefined') { return ''; }
+		if (mask.masked) { return '***'; }
+		return formatNumber(value ?? '');
+	};
 
 	const monthSum = useMemo(() => {
 		let sum = 0;
@@ -370,7 +379,7 @@ const MainPage = () => {
                                 }}
                             />
                         </View>
-						<Text style={styles.redText}>{monthSum}</Text>
+						<Text style={styles.redText}>{maskedFormat(monthSum)}</Text>
 					</View>;
 				}}
                 // eslint-disable-next-line react/no-unstable-nested-components
@@ -382,7 +391,7 @@ const MainPage = () => {
 						onPress={() => { requestAnimationFrame(() => onPress(_date)); }}
 					>
 						<Text style={styles.day}>{children}</Text>
-						<Text style={styles.redText}>{formatNumber(listByDay?.[_key]?.sum)}</Text>
+						<Text style={styles.redText}>{maskedFormat(listByDay?.[_key]?.sum)}</Text>
 					</TouchableOpacity>;
                 }}
                 hideExtraDays
@@ -395,8 +404,8 @@ const MainPage = () => {
                 disabled={isDisableConfirmButton()}
             />
             <Text style={styles.header}>
-                {language.get('date')}: {dateString.toString()}&nbsp;
-                {language.get('sum')}: {formatNumber(listByDay?.[key]?.sum)}
+				{language.get('date')}: {dateString.toString()}&nbsp;
+				{language.get('sum')}: {maskedFormat(listByDay?.[key]?.sum)}
             </Text>
             <ScrollView style={styles.listByDay} nestedScrollEnabled={true}>
             {
@@ -411,7 +420,7 @@ const MainPage = () => {
 						>
                             <Text>
                                 {language.get('shop.name')}: {item.name}{'\n'}
-                                {language.get('price')}: {formatNumber(item.value)}{'\n'}
+								  {language.get('price')}: {maskedFormat(item.value)}{'\n'}
                             </Text>
                         </Pressable>
                     </View>;

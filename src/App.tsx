@@ -6,23 +6,26 @@ import SearchPage from './components/Page/SearchPage';
 import SettingPage from './components/Page/SettingPage';
 import { PageEnum } from './enum/PageEnum';
 import useAuth from './hook/useAuth';
+import { MaskProvider } from './hook/useMask';
 
 function App() {
 	useAuth();
 
 	const [page, setPage] = useState<string>(PageEnum.main);
 
-	return <SafeAreaView style={styles.container}>
-		<StatusBar />
-		{(() => {
-			switch(page) {
-				case PageEnum.setting: return <SettingPage />;
-				case PageEnum.search: return <SearchPage />;
-				default: return <MainPage />;
-			}
-		})()}
-		<BottomBar currentPage={page} setPage={setPage} />
-	</SafeAreaView>;
+	return <MaskProvider>
+		<SafeAreaView style={styles.container}>
+			<StatusBar />
+			{(() => {
+				switch(page) {
+					case PageEnum.setting: return <SettingPage />;
+					case PageEnum.search: return <SearchPage />;
+					default: return <MainPage />;
+				}
+			})()}
+			<BottomBar currentPage={page} setPage={setPage} />
+		</SafeAreaView>
+	</MaskProvider>;
 }
 
 const styles = StyleSheet.create({
