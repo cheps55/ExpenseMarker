@@ -18,9 +18,10 @@ const BottomBar = ({
     };
 
     return <View style={styles.bottomBar}>
-        <Pressable style={styles.bottomItem} onPress={onPagePress(PageEnum.main)}><Text style={styles.text}>{language.get('page.main')}</Text></Pressable>
-        <Pressable style={styles.bottomItem} onPress={onPagePress(PageEnum.search)}><Text style={styles.text}>{language.get('page.searchPage')}</Text></Pressable>
-        <Pressable style={styles.bottomItem} onPress={onPagePress(PageEnum.setting)}><Text style={styles.text}>{language.get('page.setting')}</Text></Pressable>
+        <Pressable style={styles.bottomItem} onPress={onPagePress(PageEnum.main)}><Text style={styles.text}>{language.get(`page.${PageEnum.main}`)}</Text></Pressable>
+        <Pressable style={styles.bottomItem} onPress={onPagePress(PageEnum.search)}><Text style={styles.text}>{language.get(`page.${PageEnum.search}`)}</Text></Pressable>
+        <Pressable style={styles.bottomItem} onPress={onPagePress(PageEnum.trend)}><Text style={styles.text}>{language.get(`page.${PageEnum.trend}`)}</Text></Pressable>
+        <Pressable style={styles.bottomItem} onPress={onPagePress(PageEnum.setting)}><Text style={styles.text}>{language.get(`page.${PageEnum.setting}`)}</Text></Pressable>
         <Pressable style={styles.watchItem} onPress={() => { mask.toggle(); }}>
             <Text style={styles.text}>{mask.masked ? '🙈' : '👀'}</Text>
         </Pressable>

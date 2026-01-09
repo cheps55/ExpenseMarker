@@ -11,3 +11,9 @@ export const subtractNumber = (arr: number[]) => {
     if (arr.length === 0) { return 0; }
     return arr.slice(1).reduce((acc, item) => acc - (!isNaN(item) ? item : 0), arr[0]);
 };
+
+export const maskedNumber = (masked: boolean, value: string | number | undefined) => {
+    if (typeof value === 'undefined') { return ''; }
+    if (masked) { return '***'; }
+    return formatNumber(value ?? '');
+};

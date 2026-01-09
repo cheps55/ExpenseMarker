@@ -4,6 +4,7 @@ import BottomBar from './components/BottomBar/BottomBar';
 import MainPage from './components/Page/MainPage';
 import SearchPage from './components/Page/SearchPage';
 import SettingPage from './components/Page/SettingPage';
+import TrendPage from './components/Page/TrendPage';
 import { PageEnum } from './enum/PageEnum';
 import useAuth from './hook/useAuth';
 import { MaskProvider } from './hook/useMask';
@@ -20,6 +21,7 @@ function App() {
 				switch(page) {
 					case PageEnum.setting: return <SettingPage />;
 					case PageEnum.search: return <SearchPage />;
+					case PageEnum.trend: return <TrendPage />;
 					default: return <MainPage />;
 				}
 			})()}

@@ -1,5 +1,6 @@
 import { SettingType } from '../enum/ActionEnum';
 import { GroupType } from '../enum/InputEnum';
+import { PageEnum } from '../enum/PageEnum';
 
 const useLanguage = (language: 'en' | 'zh' = 'zh') => {
     const get = (key: string) => {
@@ -110,17 +111,21 @@ const Lang: ILanguage = Object.freeze({
         'en': 'Edit',
         'zh': '編輯',
     },
-    'page.main': {
+    [`page.${PageEnum.main}`]: {
         'en': 'Main',
         'zh': '首頁',
     },
-    'page.searchPage': {
+    [`page.${PageEnum.search}`]: {
         'en': 'Search',
         'zh': '搜尋',
     },
-    'page.setting': {
+    [`page.${PageEnum.setting}`]: {
         'en': 'Setting',
         'zh': '設定',
+    },
+    [`page.${PageEnum.trend}`]: {
+        'en': 'Trend',
+        'zh': '趨勢',
     },
 });
 
